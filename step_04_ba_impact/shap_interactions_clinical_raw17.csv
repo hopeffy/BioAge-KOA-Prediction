@@ -1,0 +1,7 @@
+feature_1,feature_2,interaction_strength,clinical_pair_group,clinical_rationale
+BMI,Biological Age,0.21691161394119263,biological_age x bmi,Aging-mechanical load interaction
+Gender,Biological Age,0.08602003753185272,biological_age x gender,Sex-specific aging risk interaction
+Gender,BMI,0.06642936170101166,bmi x gender,Sex-specific obesity burden
+Hypertension,Biological Age,0.040241893380880356,biological_age x hypertension,Aging-hemodynamic risk interaction
+Hypertension,BMI,0.03665563836693764,bmi x hypertension,Obesity-hemodynamic interaction
+Gender,Hypertension,0.02300252765417099,hypertension x gender,Sex-specific hypertension effect

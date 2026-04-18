@@ -1,0 +1,18 @@
+feature,shap_mean
+Biological Age,0.43942034
+Gender,0.424857
+BMI,0.40254506
+Residence,0.32180008
+Education,0.21183738
+CVD,0.17753983
+Drink,0.11588678
+Age_New,0.09256857
+Smoke,0.08634813
+Dyslipidemia,0.075221546
+Hypertension,0.06779223
+BMI_New,0.06517409
+Marital,0.04144115
+Diabetes,0.019891268
+Time,0.016162692
+Cancer,0.013350322
+wave,0.00634622

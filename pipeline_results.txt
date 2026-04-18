@@ -1,0 +1,65 @@
+================================================================================
+KOA PREDICTION PIPELINE - RESULTS TRACKING
+Biological Age Risk Analysis
+================================================================================
+
+Started: 2026-03-11 07:42:19.257007
+================================================================================
+
+
+================================================================================
+STAGE: Stage 2.5: Raw Data Baseline
+TIME: 2026-03-11 07:42:20.006976
+================================================================================
+Description: Random Forest with raw features only (no feature engineering)
+
+Metrics:
+  • ROC_AUC: 0.6083
+  • F1_Score: 0.3928
+  • Accuracy: 0.6618
+
+Details:
+  • Raw_Features: 17
+  • Training_Samples: 7604
+  • Test_Samples: 1901
+  • Train_Test_Split: 80/20
+
+
+================================================================================
+STAGE: Stage 2.7: ANOVA F-Test Analysis
+TIME: 2026-03-11 07:42:25.140869
+================================================================================
+Description: Statistical feature selection using ANOVA F-test
+
+Metrics:
+  • Total_Features: 38
+  • Significant_Features_p<0.05: 28
+  • Selected_Features: 30
+  • Mean_F_Score_Selected: 56.0754
+  • Mean_F_Score_All: 46.8259
+
+Details:
+  • Top_5_Features: ['Position_Knees_Encoded', 'Sex_Numeric', 'Heart_Disease', 'Sex_x_BMI', 'Sex_x_BioAge']
+  • Selection_Threshold: Top 30 by F-score
+  • High_Correlation_Pairs: 13
+  • Results_File: anova_feature_scores.csv
+  • Visualization_Files: ['anova_feature_analysis.png', 'anova_all_features_ranked.png']
+
+
+================================================================================
+STAGE: Stage 3: Baseline Random Forest
+TIME: 2026-03-11 07:42:26.852364
+================================================================================
+Description: Baseline RF with 30 engineered features
+
+Metrics:
+  • ROC_AUC: 0.6241
+  • F1_Score: 0.3772
+  • Accuracy: 0.6630
+
+Details:
+  • Total_Features: 30
+  • Training_Samples: 6653
+  • Test_Samples: 2852
+  • Class_Balance: {0: np.int64(4258), 1: np.int64(2395)}
+

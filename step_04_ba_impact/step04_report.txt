@@ -1,0 +1,200 @@
+================================================================================
+STEP 04: FEATURE IMPACT & PAPER REPLICATION - REPORT
+================================================================================
+Date: 2026-04-18 23:18:08
+Dataset: 12329 rows, KOA rate=13.3%
+
+1. SHAP ANALYSIS
+----------------------------------------
+RF SHAP Top Features:
+  Gender                        : SHAP=0.0324
+  Residence                     : SHAP=0.0306
+  BMI                           : SHAP=0.0276
+  Biological Age                : SHAP=0.0266
+  Education                     : SHAP=0.0218
+  CVD                           : SHAP=0.0196
+  Age_New                       : SHAP=0.0170
+  Drink                         : SHAP=0.0143
+  Hypertension                  : SHAP=0.0109
+  BMI_New                       : SHAP=0.0088
+
+XGBoost SHAP Top Features:
+  Biological Age                : SHAP=0.4394
+  Gender                        : SHAP=0.4249
+  BMI                           : SHAP=0.4025
+  Residence                     : SHAP=0.3218
+  Education                     : SHAP=0.2118
+  CVD                           : SHAP=0.1775
+  Drink                         : SHAP=0.1159
+  Age_New                       : SHAP=0.0926
+  Smoke                         : SHAP=0.0863
+  Dyslipidemia                  : SHAP=0.0752
+
+XGBoost SHAP Top Interactions (raw17):
+  BMI                  x Biological Age      : INT=0.2169
+  Gender               x Biological Age      : INT=0.0860
+  Education            x BMI                 : INT=0.0691
+  Gender               x BMI                 : INT=0.0664
+  Education            x Biological Age      : INT=0.0579
+  Drink                x BMI                 : INT=0.0574
+  Residence            x Biological Age      : INT=0.0520
+  Age_New              x Biological Age      : INT=0.0516
+  Residence            x BMI                 : INT=0.0498
+  Drink                x Biological Age      : INT=0.0461
+
+Clinically Filtered SHAP Interactions (raw17):
+  BMI                  x Biological Age      : INT=0.2169 [biological_age x bmi]
+  Gender               x Biological Age      : INT=0.0860 [biological_age x gender]
+  Gender               x BMI                 : INT=0.0664 [bmi x gender]
+  Hypertension         x Biological Age      : INT=0.0402 [biological_age x hypertension]
+  Hypertension         x BMI                 : INT=0.0367 [bmi x hypertension]
+  Gender               x Hypertension        : INT=0.0230 [hypertension x gender]
+
+1A-2. SHAP ANALYSIS WITH PHENOAGE_ADAPTED
+----------------------------------------
+XGBoost SHAP Top Features (raw17 + PhenoAge_Adapted):
+  Gender                        : SHAP=0.3973
+  Biological Age                : SHAP=0.3854
+  BMI                           : SHAP=0.3577
+  Residence                     : SHAP=0.3420
+  PhenoAge_Adapted              : SHAP=0.2816
+  CVD                           : SHAP=0.1875
+  Education                     : SHAP=0.1822
+  Drink                         : SHAP=0.1206
+  Age_New                       : SHAP=0.0927
+  Hypertension                  : SHAP=0.0766
+
+XGBoost SHAP Top Interactions (raw17 + PhenoAge_Adapted):
+  BMI                  x Biological Age      : INT=0.1605
+  Biological Age       x PhenoAge_Adapted    : INT=0.1462
+  BMI                  x PhenoAge_Adapted    : INT=0.1183
+  Gender               x Biological Age      : INT=0.0658
+  Gender               x BMI                 : INT=0.0593
+  Education            x Biological Age      : INT=0.0537
+  Education            x BMI                 : INT=0.0530
+  Drink                x Biological Age      : INT=0.0502
+  Hypertension         x Biological Age      : INT=0.0493
+  Gender               x Residence           : INT=0.0490
+
+Clinically Filtered SHAP Interactions (raw17 + PhenoAge_Adapted):
+  BMI                  x Biological Age      : INT=0.1605 [biological_age x bmi]
+  Gender               x Biological Age      : INT=0.0658 [biological_age x gender]
+  Gender               x BMI                 : INT=0.0593 [bmi x gender]
+  Hypertension         x Biological Age      : INT=0.0493 [biological_age x hypertension]
+  Hypertension         x BMI                 : INT=0.0379 [bmi x hypertension]
+  Gender               x Hypertension        : INT=0.0211 [hypertension x gender]
+
+1A-3. SHAP ANALYSIS WITH HS-CRP
+----------------------------------------
+XGBoost SHAP Top Features (raw17 + hs-CRP):
+  Biological Age                : SHAP=0.4143
+  Gender                        : SHAP=0.4131
+  BMI                           : SHAP=0.3507
+  Residence                     : SHAP=0.3450
+  crp_mg.L                      : SHAP=0.2497
+  Education                     : SHAP=0.2145
+  CVD                           : SHAP=0.1608
+  Drink                         : SHAP=0.1121
+  Age_New                       : SHAP=0.1108
+  Smoke                         : SHAP=0.0883
+
+XGBoost SHAP Top Interactions (raw17 + hs-CRP):
+  BMI                  x Biological Age      : INT=0.1622
+  Biological Age       x crp_mg.L            : INT=0.1255
+  BMI                  x crp_mg.L            : INT=0.0888
+  Education            x BMI                 : INT=0.0639
+  Gender               x Biological Age      : INT=0.0619
+  Gender               x BMI                 : INT=0.0586
+  Residence            x Biological Age      : INT=0.0544
+  Education            x Biological Age      : INT=0.0542
+  Age_New              x Biological Age      : INT=0.0486
+  Gender               x Residence           : INT=0.0451
+
+Clinically Filtered SHAP Interactions (raw17 + hs-CRP):
+  BMI                  x Biological Age      : INT=0.1622 [biological_age x bmi]
+  Biological Age       x crp_mg.L            : INT=0.1255 [biological_age x hscrp]
+  BMI                  x crp_mg.L            : INT=0.0888 [bmi x hscrp]
+  Gender               x Biological Age      : INT=0.0619 [biological_age x gender]
+  Gender               x BMI                 : INT=0.0586 [bmi x gender]
+  Hypertension         x Biological Age      : INT=0.0357 [biological_age x hypertension]
+  Gender               x crp_mg.L            : INT=0.0331 [gender x hscrp]
+  Hypertension         x BMI                 : INT=0.0303 [bmi x hypertension]
+  Hypertension         x crp_mg.L            : INT=0.0272 [hypertension x hscrp]
+  Gender               x Hypertension        : INT=0.0129 [hypertension x gender]
+
+1B. AGING CLOCK SUMMARY
+----------------------------------------
+  Biological Age          : AUC=0.5356, OR=1.0115, corr(KOA)=0.0383
+  BIR_log                 : AUC=0.5347, OR=0.9736, corr(KOA)=-0.0400
+  BIR_orig                : AUC=0.5299, OR=0.9761, corr(KOA)=-0.0343
+  PhenoAge_Adapted        : AUC=0.5297, OR=1.0076, corr(KOA)=0.0327
+  BA_KDM_orig             : AUC=0.5187, OR=1.0057, corr(KOA)=0.0208
+  BA_KDM_log              : AUC=0.5158, OR=1.0050, corr(KOA)=0.0182
+  PhenoAge_Adapted_Accel  : AUC=0.5038, OR=1.0053, corr(KOA)=0.0081
+
+2. LASSO FEATURE SELECTION
+----------------------------------------
+  Gender                        : coef=0.419970
+  Residence                     : coef=-0.328449
+  CVD                           : coef=0.215194
+  Education                     : coef=-0.135141
+  PhenoAge_Adapted              : coef=0.130596
+  Drink                         : coef=0.102822
+  Dyslipidemia                  : coef=0.088244
+  Smoke                         : coef=0.081793
+  sbp.mean                      : coef=-0.081287
+  TC_mg.d L                     : coef=-0.071474
+  Cancer                        : coef=0.061394
+  Hypertension                  : coef=0.038572
+  creatinine_mg.d L             : coef=-0.028263
+  Hb A1c                        : coef=-0.026334
+  Time                          : coef=-0.025469
+  Age_New                       : coef=0.016983
+  crp_mg.L                      : coef=0.016801
+  bun_mg.d L                    : coef=0.014885
+  TG_mg.d L                     : coef=0.014017
+  BMI_New                       : coef=0.013698
+  plt_10.9.L                    : coef=-0.011237
+
+  Features selected: 21/28
+
+3. FEATURE IMPACT COMPARISON
+----------------------------------------
+  raw17                         : AUC=0.8937 (+/-0.0081), 17 feats
+  raw17_plus_PhenoAge_Adapted   : AUC=0.8683 (+/-0.0106), 18 feats
+  raw17_plus_KDM_orig           : AUC=0.8652 (+/-0.0104), 18 feats
+  raw17_plus_KDM_log            : AUC=0.8626 (+/-0.0080), 18 feats
+  raw17_plus_PhenoAge_Accel     : AUC=0.8547 (+/-0.0109), 18 feats
+  raw17_plus_Pheno_quartile     : AUC=0.8529 (+/-0.0106), 19 feats
+  raw17_plus_KDM_quartile       : AUC=0.8422 (+/-0.0092), 19 feats
+  raw17_plus_KDM_PhenoAge_Adapted: AUC=0.8351 (+/-0.0113), 19 feats
+  raw17_plus_aging_accel        : AUC=0.8059 (+/-0.0155), 19 feats
+  raw17_plus_BIR                : AUC=0.7949 (+/-0.0110), 19 feats
+  raw17_plus_biomarkers         : AUC=0.7269 (+/-0.0106), 25 feats
+  raw17_plus_Pheno_biomarkers   : AUC=0.7208 (+/-0.0083), 26 feats
+  raw17_plus_KDM_biomarkers     : AUC=0.7178 (+/-0.0091), 26 feats
+  raw17_all                     : AUC=0.6866 (+/-0.0113), 35 feats
+
+4. PAPER REPLICATION - TOP 15
+----------------------------------------
+  all_raw17                 + RandomForest        : AUC=0.8937, F1=0.7578
+  all_plus_PhenoAge         + RandomForest        : AUC=0.8683, F1=0.4914
+  all_plus_KDM              + RandomForest        : AUC=0.8626, F1=0.4449
+  paper_11                  + RandomForest        : AUC=0.8459, F1=0.7039
+  all_plus_KDM_PhenoAge     + RandomForest        : AUC=0.8341, F1=0.2952
+  all_raw17                 + XGBoost_scaled      : AUC=0.8327, F1=0.5520
+  all_raw17                 + XGBoost             : AUC=0.8048, F1=0.3139
+  paper_11                  + XGBoost_scaled      : AUC=0.7918, F1=0.4365
+  all_plus_PhenoAge         + XGBoost_scaled      : AUC=0.7782, F1=0.4437
+  all_raw17                 + LightGBM            : AUC=0.7757, F1=0.1342
+  all_plus_KDM              + XGBoost_scaled      : AUC=0.7718, F1=0.4407
+  all_plus_PhenoAge         + XGBoost             : AUC=0.7651, F1=0.2378
+  paper_11                  + XGBoost             : AUC=0.7616, F1=0.2080
+  all_plus_KDM              + XGBoost             : AUC=0.7573, F1=0.2216
+  all_plus_PhenoAge         + LightGBM            : AUC=0.7488, F1=0.1099
+
+5. COMPARISON WITH PAPER
+----------------------------------------
+  Our best AUROC: 0.8937
+  Paper best AUROC: 0.9078
+  Difference: 0.0141

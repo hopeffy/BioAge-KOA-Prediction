@@ -1,0 +1,29 @@
+================================================================================
+STEP 10: DEFAULT MODEL COMPARISON REPORT
+Professor's Workflow Step 6
+================================================================================
+
+Date: 2026-04-14 13:40:28.440925
+Data: Raw Data Direct, 18046 samples, 17 features
+Evaluation: 5-fold Stratified CV x 3 seeds = 15 evaluations
+
+RANKING:
+--------------------------------------------------------------------------------
+1. 4_GradientBoosting        ROC: 0.7031 +/- 0.0091  F1: 0.4233  vs_RF: +5.40%
+2. 8_CatBoost                ROC: 0.6985 +/- 0.0085  F1: 0.4465  vs_RF: +4.71%
+3. 7_LightGBM                ROC: 0.6956 +/- 0.0099  F1: 0.4443  vs_RF: +4.27%
+4. 6_XGBoost                 ROC: 0.6759 +/- 0.0093  F1: 0.4388  vs_RF: +1.31%
+5. 5_RandomForest            ROC: 0.6671 +/- 0.0088  F1: 0.4358  vs_RF: +0.00%
+6. 3_KNN                     ROC: 0.6236 +/- 0.0040  F1: 0.4112  vs_RF: -6.52%
+7. 1_LogisticRegression      ROC: 0.6199 +/- 0.0061  F1: 0.2349  vs_RF: -7.07%
+8. 2_DecisionTree            ROC: 0.5700 +/- 0.0071  F1: 0.4246  vs_RF: -14.55%
+
+WINNER: 4_GradientBoosting
+ROC AUC: 0.7031 +/- 0.0091
+F1 Score: 0.4233 +/- 0.0115
+
+
+STAIRCASE PROGRESS (Step 10):
+  Logistic Regression (baseline): 0.6199
+  Random Forest (default):        0.6671 (+7.61%)
+  Best Model (default):           0.7031 (+13.42%)

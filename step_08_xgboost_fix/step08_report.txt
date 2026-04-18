@@ -1,0 +1,37 @@
+================================================================================
+STEP 08: XGBOOST FIX & ENCODING IMPROVEMENTS - REPORT
+================================================================================
+Date: 2026-04-14 20:44:47
+
+IMPROVEMENTS APPLIED:
+1. One-Hot Encoding (Gender, Age_New, Marital, Education, Residence, BMI_New)
+2. PCA on biomarkers (8 -> 1-2 components)
+3. XGBoost scale_pos_weight + Youden threshold
+4. Probability calibration (Isotonic Regression)
+5. Forced BA LASSO feature selection
+
+TOP 20 CONFIGURATIONS:
+  A_raw17_int               | RF                        | AUC=0.8967 | F1=0.6701
+  A_raw17_int               | RF                        | AUC=0.8967 | F1=0.7596
+  B_raw17_ohe               | RF                        | AUC=0.8954 | F1=0.6593
+  B_raw17_ohe               | RF                        | AUC=0.8954 | F1=0.7580
+  B_raw17_ohe               | RF_calibrated             | AUC=0.8810 | F1=0.6369
+  E_ohe_KDM                 | RF                        | AUC=0.8699 | F1=0.4469
+  E_ohe_KDM                 | RF                        | AUC=0.8699 | F1=0.5736
+  B_raw17_ohe               | LightGBM_spw              | AUC=0.8012 | F1=0.4497
+  B_raw17_ohe               | LightGBM_spw              | AUC=0.8012 | F1=0.4541
+  A_raw17_int               | LightGBM_spw              | AUC=0.7984 | F1=0.4453
+  A_raw17_int               | LightGBM_spw              | AUC=0.7984 | F1=0.4447
+  A_raw17_int               | XGBoost_spw               | AUC=0.7654 | F1=0.3907
+  A_raw17_int               | XGBoost_spw               | AUC=0.7654 | F1=0.3963
+  B_raw17_ohe               | XGBoost_spw               | AUC=0.7651 | F1=0.3949
+  B_raw17_ohe               | XGBoost_spw               | AUC=0.7651 | F1=0.3971
+  E_ohe_KDM                 | LightGBM_spw              | AUC=0.7598 | F1=0.3931
+  E_ohe_KDM                 | LightGBM_spw              | AUC=0.7598 | F1=0.4007
+  B_raw17_ohe               | XGBoost_spw_calibrated    | AUC=0.7582 | F1=0.3756
+  A_raw17_int               | XGBoost_spw_calibrated    | AUC=0.7577 | F1=0.3756
+  C_raw17_int_PCA           | RF                        | AUC=0.7485 | F1=0.0284
+
+KEY FINDINGS:
+  Integer encoding best: AUC=0.8967
+  One-hot encoding best: AUC=0.8954

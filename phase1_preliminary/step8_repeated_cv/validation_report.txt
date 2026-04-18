@@ -1,0 +1,20 @@
+================================================================================
+STAGE 8: REPEATED STRATIFIED K-FOLD CV - VALIDATION REPORT
+================================================================================
+
+Methodology: 5-fold × 5 repeats = 25 evaluations
+
+Baseline (17 features): 0.6668 ± 0.0080
+Winner (18 features):   0.6668 ± 0.0077
+
+Improvement: -0.0000 (-0.01%)
+P-value: 0.9587 (not significant)
+Cohen's d: -0.0049 (Very small effect)
+
+Winner feature: OA_Multi_System_Degradation
+Formula: (Age/60) × (Comorbidities/6) × (BMI/25)
+
+Conclusion:
+⚠️  Improvement not statistically significant
+   Consider using baseline or further optimization
+================================================================================

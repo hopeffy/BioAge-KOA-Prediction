@@ -1,0 +1,4 @@
+analysis_name,case_tag,local_test_index,true_label,predicted_risk,waterfall_path
+raw17_plus_pheno,high_risk_positive,298,1,0.94243985414505,C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\step_04_ba_impact\shap_waterfall_xgb_raw17_plus_pheno_high_risk_positive.png
+raw17_plus_pheno,high_risk_negative,1835,0,0.8774112462997437,C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\step_04_ba_impact\shap_waterfall_xgb_raw17_plus_pheno_high_risk_negative.png
+raw17_plus_pheno,median_risk_case,3162,0,0.07131727039813995,C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\step_04_ba_impact\shap_waterfall_xgb_raw17_plus_pheno_median_risk_case.png

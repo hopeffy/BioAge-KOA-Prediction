@@ -1,0 +1,5 @@
+Deney,ROC_AUC,F1_Score,Feature_Count
+Exp1: Position_Knees_Encoded Yok,0.5832,0.4214,43
+Exp2: p < 0.05,0.5822,0.4197,28
+Exp3: 0.01 < p < 0.05,0.5266,0.3920,3
+Exp4: Hierarchical Clustering,0.5793,0.4263,5

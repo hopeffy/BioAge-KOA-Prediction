@@ -1,0 +1,27 @@
+================================================================================
+STEP 09: FINAL PUSH RESULTS
+================================================================================
+Date: 2026-04-14 22:25:33
+Duration: 0:04:22.204659
+
+OPTUNA LGBM PARAMS:
+  {'n': 575, 'md': 12, 'nl': 49, 'lr': 0.24417830419929262, 'ss': 0.6200979798853476, 'cs': 0.9742462611779071, 'spw': 4.655297179190753, 'ra': 0.0373712440724173, 'rl': 0.02607221663280936, 'mcs': 10, 'cw': None}
+
+  3_stacking   raw17                     Stack_RF+XGB+LGBM_LR   d_0.5    AUC=0.8925 PRAUC=0.7876 F1M=0.8579
+  3_stacking   raw17                     Stack_RF+XGB+LGBM_LR   f1opt    AUC=0.8925 PRAUC=0.7876 F1M=0.8718
+  3_stacking   raw17                     Stack_RF+XGB+LGBM_LR   youden   AUC=0.8925 PRAUC=0.7876 F1M=0.8193
+  3_stacking   raw17                     Stack_RF+XGB_LR        d_0.5    AUC=0.8914 PRAUC=0.7829 F1M=0.8536
+  3_stacking   raw17                     Stack_RF+XGB_LR        youden   AUC=0.8914 PRAUC=0.7829 F1M=0.8120
+  3_stacking   raw17                     Stack_RF+XGB_LR        f1opt    AUC=0.8914 PRAUC=0.7829 F1M=0.8707
+  3_stacking   raw17                     Stack_RFbal+XGB_LR     youden   AUC=0.8903 PRAUC=0.7812 F1M=0.8118
+  3_stacking   raw17                     Stack_RFbal+XGB_LR     d_0.5    AUC=0.8903 PRAUC=0.7812 F1M=0.8542
+  3_stacking   raw17                     Stack_RFbal+XGB_LR     f1opt    AUC=0.8903 PRAUC=0.7812 F1M=0.8712
+  2_optuna     raw17                     LGBM_optuna            f1opt    AUC=0.8652 PRAUC=0.7639 F1M=0.8696
+  2_optuna     raw17                     LGBM_optuna            d_0.5    AUC=0.8652 PRAUC=0.7639 F1M=0.8482
+  2_optuna     raw17                     LGBM_optuna            youden   AUC=0.8652 PRAUC=0.7639 F1M=0.8093
+
+COMPARISON:
+  Previous: 0.8967
+  This step: 0.8925
+  Paper: 0.9078
+  Gap: 0.0153

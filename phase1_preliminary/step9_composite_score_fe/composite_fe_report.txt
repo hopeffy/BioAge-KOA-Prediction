@@ -1,0 +1,130 @@
+================================================================================
+STAGE 9: COMPOSITE SCORE-BASED FEATURE ENGINEERING REPORT
+================================================================================
+
+Methodology:
+  - Validation: 5-fold x 5-repeat CV = 25 evaluations
+  - Model: RandomForest (n_estimators=100)
+  - Biomarkers: ['Biological Age', 'bmi_kg.m2', 'Comorbidity_Count']
+  - NO DATA LEAKAGE: All transforms fit on train fold only
+
+Ranking (by ROC AUC):
+--------------------------------------------------------------------------------
+
+2_Raw_Plus_Composite_Burden:
+  Features: 19
+  ROC AUC: 0.6657 ± 0.0067 (CV: 1.01%)
+  PR AUC:  0.5071
+  F1:      0.4350
+  Brier:   0.2063
+  Improvement: +0.0006 (+0.09%)
+
+6_Raw_Plus_Composite_And_Missing:
+  Features: 21
+  ROC AUC: 0.6655 ± 0.0070 (CV: 1.05%)
+  PR AUC:  0.5051
+  F1:      0.4355
+  Brier:   0.2065
+  Improvement: +0.0004 (+0.06%)
+
+4_Raw_Plus_Composite_Acceleration:
+  Features: 19
+  ROC AUC: 0.6652 ± 0.0082 (CV: 1.23%)
+  PR AUC:  0.5056
+  F1:      0.4371
+  Brier:   0.2066
+  Improvement: +0.0001 (+0.01%)
+
+1_Baseline_Raw:
+  Features: 18
+  ROC AUC: 0.6651 ± 0.0073 (CV: 1.09%)
+  PR AUC:  0.5068
+  F1:      0.4379
+  Brier:   0.2066
+  (BASELINE)
+
+3_Raw_Plus_Composite_Q4:
+  Features: 19
+  ROC AUC: 0.6648 ± 0.0073 (CV: 1.10%)
+  PR AUC:  0.5057
+  F1:      0.4407
+  Brier:   0.2067
+  Improvement: -0.0003 (-0.05%)
+
+5_Raw_Plus_Composite_And_Interaction:
+  Features: 20
+  ROC AUC: 0.6646 ± 0.0063 (CV: 0.95%)
+  PR AUC:  0.5075
+  F1:      0.4360
+  Brier:   0.2064
+  Improvement: -0.0005 (-0.07%)
+
+================================================================================
+DECISION CRITERIA:
+================================================================================
+
+A feature set is VALIDATED if:
+  1. Mean ROC AUC > Baseline
+  2. Improvement > 1 std dev of baseline
+  3. Wins in majority of folds (>50%)
+  4. Stable across repeats (CV < 2%)
+
+Validation Results:
+--------------------------------------------------------------------------------
+
+2_Raw_Plus_Composite_Burden:
+  (+) Higher mean
+  (-) Improvement < 1 std (0.0006 < 0.0073)
+  (+) Stable (CV < 2%)
+  -> NOT VALIDATED
+
+6_Raw_Plus_Composite_And_Missing:
+  (+) Higher mean
+  (-) Improvement < 1 std (0.0004 < 0.0073)
+  (+) Stable (CV < 2%)
+  -> NOT VALIDATED
+
+4_Raw_Plus_Composite_Acceleration:
+  (+) Higher mean
+  (-) Improvement < 1 std (0.0001 < 0.0073)
+  (+) Stable (CV < 2%)
+  -> NOT VALIDATED
+
+3_Raw_Plus_Composite_Q4:
+  (-) Lower/equal mean
+  (-) Negative improvement
+  (+) Stable (CV < 2%)
+  -> NOT VALIDATED
+
+5_Raw_Plus_Composite_And_Interaction:
+  (-) Lower/equal mean
+  (-) Negative improvement
+  (+) Stable (CV < 2%)
+  -> NOT VALIDATED
+
+================================================================================
+CONCLUSION:
+================================================================================
+
+NO configuration passed all validation criteria.
+
+Best performer: Composite_Burden (+0.09%)
+  - Improvement too small (< 1 std dev)
+  - Practically identical to baseline
+  - Statistical significance questionable
+
+Composite features do not provide robust improvement.
+Dataset's predictive signal ceiling may be reached with current features.
+
+RECOMMENDATION:
+Next: Model optimization (XGBoost, LightGBM, CatBoost, tuning, ensemble)
+      Feature engineering exhausted after Stages 3-9 (7 major approaches)
+
+STAGE 9 VERDICT: Feature engineering provides NO validated improvement
+                  Even with paper-inspired composite score approach
+                  Raw features remain optimal configuration
+
+Files:
+  - composite_fe_detailed.csv (150 rows: 6 configs x 25 folds)
+  - composite_fe_summary.csv (6 rows)
+  - composite_fe_report.txt (this file)

@@ -1,0 +1,69 @@
+================================================================================
+STEP 03: KDM-BIOLOGICAL AGE CALCULATION - REPORT
+================================================================================
+Date: 2026-04-18 21:44:46
+
+1. KDM-BA CALCULATION METHOD
+----------------------------------------
+  Method: Klemera-Doubal Method (KDM)
+  Chronological Age proxy: Biological Age column
+  Biomarkers (log-transformed): 8 markers
+  Biomarkers (original scale): 8 markers
+  PhenoAge_Adapted: weighted biomarker-derived surrogate (non-canonical)
+
+2. REGRESSION RESULTS (log-transformed)
+----------------------------------------
+  plt_10.9.L: b=-0.005453, a=5.6014, r=-0.1423, R^2=0.0202
+  crp_mg.L: b=0.022801, a=-1.0746, r=0.2080, R^2=0.0433
+  Hb A1c: b=0.002172, a=1.5792, r=0.1420, R^2=0.0202
+  creatinine_mg.d L: b=0.008647, a=-0.7712, r=0.3471, R^2=0.1205
+  bun_mg.d L: b=0.008814, a=2.1978, r=0.3089, R^2=0.0954
+  TC_mg.d L: b=0.001389, a=5.1467, r=0.0683, R^2=0.0047
+  TG_mg.d L: b=-0.002211, a=4.8858, r=-0.0392, R^2=0.0015
+  sbp.mean: b=0.913801, a=77.1568, r=0.4214, R^2=0.1776
+
+3. AGING CLOCKS vs EXISTING BIOLOGICAL AGE
+----------------------------------------
+  KDM-BA (log):
+    Correlation with Biological Age: 0.9094
+    Correlation with KOA: 0.0182 (BA: 0.0383)
+    Mean: 58.70 (BA mean: 58.70)
+  KDM-BA (orig):
+    Correlation with Biological Age: 0.9113
+    Correlation with KOA: 0.0208 (BA: 0.0383)
+    Mean: 58.70 (BA mean: 58.70)
+  PhenoAge_Adapted:
+    Correlation with Biological Age: 0.9527
+    Correlation with KOA: 0.0327 (BA: 0.0383)
+    Mean: 58.70 (BA mean: 58.70)
+
+4. LOGISTIC REGRESSION (Univariate aging clock-KOA)
+----------------------------------------
+  Biological Age: AUROC=0.5356, OR=1.0115
+  BA_KDM_log: AUROC=0.5158, OR=1.0050
+  BA_KDM_orig: AUROC=0.5187, OR=1.0057
+  PhenoAge_Adapted: AUROC=0.5297, OR=1.0076
+  PhenoAge_Adapted_Accel: AUROC=0.5038, OR=1.0053
+
+5. PHENOAGE_ADAPTED DETAILS
+----------------------------------------
+  This score is adapted and should not be interpreted as canonical Levine PhenoAge.
+  Composite risk mean/std: 0.0000 / 3.0544
+  Age mapping scale: 4.4035
+  Weights:
+    crp_original: +1.40
+    hba1c_original: +1.20
+    creatinine_original: +1.00
+    bun_original: +0.90
+    sbp_original: +1.00
+    total_cholesterol_original: +0.60
+    triglycerides_original: +0.60
+    platelet_original: -0.40
+
+6. DATASETS SAVED
+----------------------------------------
+  Dataset A (n=12329): dataset_A_with_kdm_ba.csv
+  Dataset B (n=7635): dataset_B_with_kdm_ba.csv
+  KDM-BA columns added: BA_KDM_log, BA_KDM_orig, BIR_log, BIR_orig
+  Adapted clock columns added: PhenoAge_Adapted, PhenoAge_Adapted_Accel
+  Quartile columns added: Biological Age_Qint, BA_KDM_log_Qint, BA_KDM_orig_Qint, PhenoAge_Adapted_Qint

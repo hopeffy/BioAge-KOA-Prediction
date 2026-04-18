@@ -1,0 +1,56 @@
+================================================================================
+STEP 01: SHEET1 DATA PREPARATION - REPORT
+================================================================================
+Date: 2026-04-14 17:42:28
+
+1. DATA SOURCE
+----------------------------------------
+  Source: Raw Data .xlsx, Sheet1
+  Original shape: 15,545 rows x 28 columns
+  After filtering (position_knees non-null): 15545 -> 12329 rows
+  Leakage columns removed: Arthritis, position_knees
+  Final features: 33
+
+2. DATASETS CREATED
+----------------------------------------
+  Dataset A (all pk non-null): 12329 rows, 33 features, KOA rate=13.3%
+  Dataset B (BA >= 55):         7635 rows, 33 features, KOA rate=14.2%
+  Paper reference:               9,505 rows, 10.5% KOA rate
+
+3. BIOMARKER LOG-TRANSFORMATION
+----------------------------------------
+  All 7 biomarkers (plt, crp, HbA1c, creatinine, BUN, TC, TG) are log-transformed
+  Reverse transformation: exp(value) recovers original clinical scale
+  sbp.mean is in original scale (mmHg)
+
+4. ENCODING MAPPINGS
+----------------------------------------
+  Gender:       1=Male, 2=Female
+  Age_New:      1=younger(45-59), 2=older(60+)
+  BMI_New:      1=underweight/normal, 2=overweight, 3=obese
+  Marital:      1=married, 2=other
+  Education:    1=low, 2=medium, 3=high
+  Residence:    1=urban, 2=rural
+  Disease cols: 0=no, 1=yes (Hypertension, Dyslipidemia, Diabetes, Cancer, CVD)
+  Smoke:        0=never, 1=ever
+  Drink:        0=never, 1=ever
+  KOA:          0=no, 1=yes (Arthritis=yes AND position_knees=yes)
+
+5. KOA DEFINITION
+----------------------------------------
+  KOA = (Arthritis=='yes') AND (position_knees=='yes')
+  This matches the paper's 'Symptomatic KOA' definition
+  Verification: 100% match between KOA and (Arthritis AND position_knees)
+
+6. LEAKAGE CONTROL
+----------------------------------------
+  REMOVED from features: Arthritis, position_knees
+  Reason: KOA is directly derived from these columns
+  position_knees=NaN rows also removed (as KOA cannot be verified)
+
+7. NEXT STEPS
+----------------------------------------
+  Step 02: Baseline models on Dataset A and B
+  Step 03: KDM-BA calculation from biomarkers
+  Step 04: BA impact analysis with SHAP
+  Step 05: Paper replication (LASSO, one-hot, Z-score)

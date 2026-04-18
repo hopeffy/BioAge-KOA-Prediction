@@ -1,0 +1,54 @@
+================================================================================
+STEP 10: PAPER REPLICATION - EXACT FEATURE SPACE
+================================================================================
+Date: 2026-04-14 22:47:47
+Duration: 0:08:12.555990
+
+PAPER'S METHODOLOGY:
+  - LASSO-selected 11 features (BA + 10 sociodemographic/disease)
+  - One-hot encoding for categorical variables
+  - Z-score standardization
+  - XGBoost, 70/30 stratified split
+  - Paper AUROC: 0.9078
+
+FEATURE SETS TESTED:
+  paper_11: ['Biological Age', 'Gender', 'Education', 'Residence', 'Hypertension', 'Dyslipidemia', 'CVD', 'Smoke', 'Drink', 'BMI_New', 'Cancer']
+  paper_13: ['Biological Age', 'Gender', 'Marital', 'Education', 'Residence', 'Hypertension', 'Dyslipidemia', 'Diabetes', 'Cancer', 'CVD', 'Smoke', 'Drink', 'BMI_New']
+  paper_13_contBMI: ['Biological Age', 'Gender', 'Marital', 'Education', 'Residence', 'Hypertension', 'Dyslipidemia', 'Diabetes', 'Cancer', 'CVD', 'Smoke', 'Drink', 'BMI']
+
+OPTUNA BEST PARAMS:
+  {'n': 438, 'md': 7, 'lr': 0.14059967425290235, 'ss': 0.8226417273471175, 'cs': 0.8939804556521429, 'spw': 3.655146219571077, 'ra': 0.010600610623054701, 'rl': 1.7211228131876416e-07, 'mcw': 1}
+
+TOP 25 RESULTS:
+  paper_13_cont_BMI      RF                 5fold_CV AUC=0.8914 PRAUC=0.7628 F1M=0.8619 F1=0.7554
+  paper_13_cont_BMI      RF                 5fold_CV AUC=0.8914 PRAUC=0.7628 F1M=0.8692 F1=0.7676
+  paper_13_cont_BMI      RF                 70/30    AUC=0.8622 PRAUC=0.6982 F1M=nan F1=nan
+  paper_13_contBMI       XGB_optuna         5fold_CV AUC=0.8603 PRAUC=0.7314 F1M=0.8417 F1=0.7227
+  paper_13_contBMI       XGB_optuna         5fold_CV AUC=0.8603 PRAUC=0.7314 F1M=0.8598 F1=0.7517
+  paper_13               RF                 5fold_CV AUC=0.8544 PRAUC=0.6030 F1M=0.8325 F1=0.7076
+  paper_13               RF                 5fold_CV AUC=0.8544 PRAUC=0.6030 F1M=0.8394 F1=0.7189
+  paper_11               RF                 5fold_CV AUC=0.8497 PRAUC=0.5837 F1M=0.8361 F1=0.7135
+  paper_11               RF                 5fold_CV AUC=0.8497 PRAUC=0.5837 F1M=0.8301 F1=0.7040
+  paper_13_contBMI       XGB_optuna         70/30    AUC=0.8292 PRAUC=0.6526 F1M=nan F1=nan
+  paper_11               RF                 70/30    AUC=0.8183 PRAUC=0.5119 F1M=nan F1=nan
+  paper_13               RF                 70/30    AUC=0.8173 PRAUC=0.5359 F1M=nan F1=nan
+  paper_13_cont_BMI      XGB_spw            70/30    AUC=0.8097 PRAUC=0.5585 F1M=nan F1=nan
+  paper_13_cont_BMI      XGB_default        5fold_CV AUC=0.8079 PRAUC=0.5023 F1M=0.6264 F1=0.3159
+  paper_13_cont_BMI      XGB_default        5fold_CV AUC=0.8079 PRAUC=0.5023 F1M=0.7178 F1=0.5108
+  paper_13_cont_BMI      XGB_default        70/30    AUC=0.8031 PRAUC=0.5002 F1M=nan F1=nan
+  paper_11               XGB_spw            70/30    AUC=0.7772 PRAUC=0.4048 F1M=nan F1=nan
+  paper_13               XGB_spw            70/30    AUC=0.7765 PRAUC=0.4233 F1M=nan F1=nan
+  paper_13               XGB_default        5fold_CV AUC=0.7677 PRAUC=0.3987 F1M=0.5704 F1=0.2090
+  paper_13               XGB_default        5fold_CV AUC=0.7677 PRAUC=0.3987 F1M=0.6572 F1=0.4226
+  paper_13_cont_BMI      XGB_spw            5fold_CV AUC=0.7659 PRAUC=0.3782 F1M=0.6151 F1=0.3944
+  paper_13_cont_BMI      XGB_spw            5fold_CV AUC=0.7659 PRAUC=0.3782 F1M=0.6465 F1=0.4146
+  paper_11               XGB_default        5fold_CV AUC=0.7613 PRAUC=0.3865 F1M=0.5666 F1=0.2019
+  paper_11               XGB_default        5fold_CV AUC=0.7613 PRAUC=0.3865 F1M=0.6530 F1=0.4145
+  paper_13_cont_BMI      XGB_tuned          70/30    AUC=0.7596 PRAUC=0.3967 F1M=nan F1=nan
+
+COMPARISON:
+  Paper AUROC: 0.9078
+  Our best AUROC: 0.8914
+  Gap: 0.0164
+  Previous best (Step 09): 0.8967
+  Improvement over previous: -0.0053

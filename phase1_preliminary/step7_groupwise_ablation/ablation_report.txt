@@ -1,0 +1,27 @@
+================================================================================
+STAGE 7: GROUP-WISE ABLATION - RESULTS SUMMARY
+================================================================================
+
+Baseline (Raw features): 0.6659 ROC AUC
+
+Best Configuration: Raw_Plus_OA_Multi_System_Degradation
+  ROC AUC: 0.6674 ± 0.0135
+  Improvement: +0.22%
+  Features: 18
+
+================================================================================
+FULL RANKING:
+================================================================================
+Raw_Plus_OA_Multi_System_Degradation     | ROC: 0.6674 ± 0.0135 | Δ: +0.22%
+Baseline_Raw                             | ROC: 0.6659 ± 0.0142 | Δ: +0.00%
+Raw_Plus_Top3_Strong                     | ROC: 0.6659 ± 0.0155 | Δ: -0.00%
+Raw_Plus_OA_Biomechanical_Stress         | ROC: 0.6655 ± 0.0134 | Δ: -0.06%
+Raw_Plus_OA_Gender_Risk                  | ROC: 0.6653 ± 0.0154 | Δ: -0.09%
+Raw_Plus_OA_CV_Risk_Cluster              | ROC: 0.6652 ± 0.0135 | Δ: -0.10%
+Raw_Plus_OA_Chronic_Disease_Load         | ROC: 0.6651 ± 0.0115 | Δ: -0.12%
+Raw_Plus_OA_Systemic_Burden              | ROC: 0.6649 ± 0.0131 | Δ: -0.15%
+Raw_Plus_Top5_Strong                     | ROC: 0.6649 ± 0.0133 | Δ: -0.15%
+Raw_Plus_OA_Age_Gender_Interaction       | ROC: 0.6647 ± 0.0159 | Δ: -0.19%
+Raw_Plus_OA_Inflammatory_Score           | ROC: 0.6646 ± 0.0146 | Δ: -0.20%
+Raw_Plus_All8_Weak                       | ROC: 0.6626 ± 0.0114 | Δ: -0.50%
+Raw_Plus_All8_Strong                     | ROC: 0.6615 ± 0.0136 | Δ: -0.66%

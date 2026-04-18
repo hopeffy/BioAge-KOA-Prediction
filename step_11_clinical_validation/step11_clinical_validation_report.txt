@@ -1,0 +1,30 @@
+================================================================================
+STEP 11: CLINICAL VALIDATION REPORT
+================================================================================
+Date: 2026-04-18 22:46:41
+Input dataset: C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\step_03_kdm_ba\dataset_A_with_kdm_ba.csv
+Samples: 12329, KOA prevalence: 13.32%
+
+Metrics by configuration:
+
+- raw17
+  isotonic AUC=0.8728, PR-AUC=0.6889, Brier=0.0977, ECE=0.0999, F1@0.50=0.0000, best_thr=0.19, F1@best=0.6748
+  raw      AUC=0.8916, PR-AUC=0.7689, Brier=0.0581, ECE=0.0462, F1@0.50=0.7516, best_thr=0.57, F1@best=0.7568
+
+- raw17_plus_adapted_aging
+  isotonic AUC=0.7469, PR-AUC=0.3770, Brier=0.1069, ECE=0.0325, F1@0.50=0.0181, best_thr=0.16, F1@best=0.3879
+  raw      AUC=0.7672, PR-AUC=0.4192, Brier=0.0986, ECE=0.0256, F1@0.50=0.1048, best_thr=0.24, F1@best=0.4163
+
+- raw17_plus_pheno
+  isotonic AUC=0.8477, PR-AUC=0.5970, Brier=0.1009, ECE=0.0692, F1@0.50=0.0264, best_thr=0.18, F1@best=0.5712
+  raw      AUC=0.8680, PR-AUC=0.6864, Brier=0.0749, ECE=0.0489, F1@0.50=0.4830, best_thr=0.34, F1@best=0.6461
+
+Interpretation notes:
+- Isotonic calibration improves probability reliability when Brier/ECE decreases.
+- AUROC may stay similar or decline slightly after calibration.
+- DCA curve above treat-all and treat-none indicates clinical net benefit.
+
+DCA clinical recommendation (10%-30% threshold band):
+- Best strategy: raw17 (raw). Estimated mean avoided unnecessary interventions: 61.9 per 100 patients vs treat-all.
+- Relative reduction vs treat-all unnecessary interventions: 71.4%
+- Peak avoidance: 72.2 per 100 at threshold=0.29.

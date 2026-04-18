@@ -1,0 +1,11 @@
+feature_1,feature_2,interaction_strength,clinical_pair_group,clinical_rationale
+BMI,Biological Age,0.16220387816429138,biological_age x bmi,Aging-mechanical load interaction
+Biological Age,crp_mg.L,0.12545183300971985,biological_age x hscrp,Aging-inflammation interaction
+BMI,crp_mg.L,0.08878891915082932,bmi x hscrp,Adiposity-inflammation interaction
+Gender,Biological Age,0.06187056750059128,biological_age x gender,Sex-specific aging risk interaction
+Gender,BMI,0.05864526703953743,bmi x gender,Sex-specific obesity burden
+Hypertension,Biological Age,0.0357215479016304,biological_age x hypertension,Aging-hemodynamic risk interaction
+Gender,crp_mg.L,0.03311791270971298,gender x hscrp,Sex-specific inflammatory burden
+Hypertension,BMI,0.030277598649263382,bmi x hypertension,Obesity-hemodynamic interaction
+Hypertension,crp_mg.L,0.02715480886399746,hypertension x hscrp,Hemodynamic-inflammation interaction
+Gender,Hypertension,0.012942451052367687,hypertension x gender,Sex-specific hypertension effect

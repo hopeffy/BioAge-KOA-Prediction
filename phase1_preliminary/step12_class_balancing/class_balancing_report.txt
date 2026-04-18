@@ -1,0 +1,14 @@
+================================================================================
+STEP 12: CLASS BALANCING REPORT
+================================================================================
+
+SMOTE + Tuned_LightGBM: 0.6849 ± 0.0078
+  F1: 0.5169
+
+Balanced Weight (XGB): 0.7053 ± 0.0087
+  F1: 0.5318
+
+Threshold Optimization: threshold=0.283
+  ROC: 0.7055, F1: 0.5433
+
+Best technique: Balanced_Weight

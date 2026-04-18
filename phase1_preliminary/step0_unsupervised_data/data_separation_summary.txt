@@ -1,0 +1,60 @@
+================================================================================
+DATA SEPARATION SUMMARY
+================================================================================
+
+1. ORIGINAL DATA
+----------------------------------------
+   Total rows: 38,800
+   Total columns: 18
+   Missing cells: 103,888 (14.88%)
+
+2. AFTER AGE FILTER (Age >= 18)
+----------------------------------------
+   Rows: 21,619
+   Removed: 17,181
+
+3. DATA SPLIT BY TARGET AVAILABILITY
+----------------------------------------
+   a) WITH Target (Supervised Learning):
+      - File: supervised_data_with_target.csv
+      - Rows: 9,505
+      - Usage: Classification models (Step 1-4)
+
+   b) WITHOUT Target (Unsupervised Learning):
+      - File: unsupervised_data_target_missing.csv
+      - Rows: 12,114
+      - Usage: Clustering, Anomaly Detection, etc.
+      - Note: Arthritis column is missing/null
+
+4. FEATURE COMPLETENESS IN UNSUPERVISED DATA
+----------------------------------------
+   wave                               : 100.0% complete
+   iyear                              : 100.0% complete
+   sex                                : 100.0% complete
+   marital_status                     : 100.0% complete
+   residence_place                    : 100.0% complete
+   Biological Age                     : 100.0% complete
+   smoke                              :  99.8% complete
+   drink                              :  99.8% complete
+   bmi_kg.m2                          :  98.3% complete
+   education                          :  92.1% complete
+   doctor_diagnose_hypertension       :  86.5% complete
+   doctor_diagnose_cancer             :  86.5% complete
+   doctor_diagnose_heart_disease      :  86.4% complete
+   doctor_diagnose_diabetes           :  86.2% complete
+   doctor_diagnose_dyslipidemia       :  85.1% complete
+   position_knees                     :  83.8% complete
+   MET                                :  43.6% complete
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+1. Use 'supervised_data_with_target.csv' for classification (Steps 1-4)
+2. Keep 'unsupervised_data_target_missing.csv' for future analysis:
+   - Clustering patients by health characteristics
+   - Anomaly detection (unusual patient profiles)
+   - Dimensionality reduction (PCA, t-SNE)
+   - Semi-supervised learning experiments
+3. These datasets preserve maximum information:
+   - No data loss from listwise deletion on informative features
+   - Total preserved: 21,619 rows (vs 2,742 with listwise deletion)

@@ -1,0 +1,154 @@
+feature_1,feature_2,interaction_strength
+BMI,Biological Age,0.16050912
+Biological Age,PhenoAge_Adapted,0.1462365
+BMI,PhenoAge_Adapted,0.11830908
+Gender,Biological Age,0.06575349
+Gender,BMI,0.059286293
+Education,Biological Age,0.053698782
+Education,BMI,0.052956227
+Drink,Biological Age,0.050190944
+Hypertension,Biological Age,0.049264245
+Gender,Residence,0.04895803
+Age_New,Biological Age,0.047258705
+Residence,Biological Age,0.044366736
+CVD,Biological Age,0.042875495
+Residence,BMI,0.039191976
+Hypertension,BMI,0.0378928
+Gender,PhenoAge_Adapted,0.03775051
+Education,Residence,0.03725561
+Drink,BMI,0.03540314
+Gender,Drink,0.03461145
+Hypertension,PhenoAge_Adapted,0.03304482
+Gender,Age_New,0.031004818
+BMI,BMI_New,0.0301528
+Residence,PhenoAge_Adapted,0.029746449
+Age_New,BMI,0.029220348
+Smoke,BMI,0.028128924
+Gender,Smoke,0.02658167
+Gender,Education,0.025359515
+CVD,PhenoAge_Adapted,0.024818795
+Drink,PhenoAge_Adapted,0.024319634
+Education,PhenoAge_Adapted,0.02395756
+Marital,BMI,0.023038385
+Age_New,PhenoAge_Adapted,0.02231956
+CVD,BMI,0.022064444
+Dyslipidemia,BMI,0.022063786
+Smoke,Biological Age,0.021974297
+Marital,Biological Age,0.021352658
+Gender,Hypertension,0.021076921
+Age_New,Education,0.020250646
+Dyslipidemia,Biological Age,0.017695773
+Age_New,Residence,0.017361369
+Smoke,Drink,0.01452538
+Residence,Drink,0.014273063
+Smoke,PhenoAge_Adapted,0.014022119
+Gender,Dyslipidemia,0.013455725
+Education,Hypertension,0.013435433
+Marital,PhenoAge_Adapted,0.013232482
+Education,CVD,0.012646969
+Residence,Dyslipidemia,0.012128032
+BMI_New,PhenoAge_Adapted,0.011651454
+Gender,BMI_New,0.011336288
+Gender,CVD,0.010948587
+Hypertension,CVD,0.010688028
+Diabetes,BMI,0.010678195
+Residence,CVD,0.010163608
+Dyslipidemia,PhenoAge_Adapted,0.00990607
+Hypertension,Drink,0.009828038
+Hypertension,Dyslipidemia,0.0090210885
+BMI_New,Biological Age,0.008906084
+Residence,Hypertension,0.008851506
+Diabetes,Biological Age,0.008659191
+Education,Dyslipidemia,0.008035391
+Dyslipidemia,Drink,0.008011439
+Marital,Dyslipidemia,0.0078413235
+Diabetes,PhenoAge_Adapted,0.0073480415
+CVD,Drink,0.0069530713
+Age_New,Drink,0.0063697626
+Education,Drink,0.0063642845
+Marital,Residence,0.006073648
+Cancer,BMI,0.005825858
+Gender,Marital,0.0057833395
+Education,BMI_New,0.0057651186
+CVD,BMI_New,0.0056794896
+Hypertension,Diabetes,0.005310809
+Dyslipidemia,Smoke,0.005244791
+Age_New,CVD,0.0051034596
+Education,Smoke,0.0050534806
+Dyslipidemia,CVD,0.004498007
+Time,BMI,0.004464979
+Hypertension,Smoke,0.0037391772
+Marital,CVD,0.003738222
+Marital,Education,0.003683384
+Age_New,Dyslipidemia,0.0036641827
+Education,Diabetes,0.0034718611
+Residence,Diabetes,0.0033595471
+Age_New,Marital,0.00323047
+Marital,Hypertension,0.0031234566
+Diabetes,Drink,0.0030281343
+Time,Residence,0.0028746189
+Marital,Smoke,0.0027822687
+Age_New,Hypertension,0.0026905597
+Diabetes,CVD,0.0026165356
+Cancer,Biological Age,0.002603296
+Drink,BMI_New,0.002405029
+Marital,Diabetes,0.0024006385
+Gender,Diabetes,0.0023907693
+Residence,Cancer,0.0023708513
+wave,Residence,0.0023509269
+Residence,BMI_New,0.0022443545
+Dyslipidemia,Diabetes,0.002142349
+wave,BMI,0.0021200308
+Residence,Smoke,0.0020994588
+Cancer,PhenoAge_Adapted,0.0019645004
+Time,Biological Age,0.001914277
+Cancer,CVD,0.0016284902
+wave,Biological Age,0.0012921543
+CVD,Smoke,0.0012113489
+Age_New,BMI_New,0.0011611455
+Gender,Cancer,0.0010989103
+Marital,Drink,0.0010678591
+Dyslipidemia,Cancer,0.0010500756
+Time,PhenoAge_Adapted,0.0008393155
+Age_New,Smoke,0.000738174
+Education,Cancer,0.00058429997
+Diabetes,Smoke,0.0005640659
+Time,Hypertension,0.0005498386
+Age_New,Cancer,0.0005333049
+Time,CVD,0.00047246463
+Time,Gender,0.00045480722
+Hypertension,Cancer,0.0003564949
+Diabetes,BMI_New,0.00030975076
+Time,Marital,0.0001662343
+Time,Age_New,0.00016141894
+Cancer,BMI_New,0.00013956378
+Cancer,Smoke,0.00013879305
+Cancer,Drink,0.00012721216
+wave,PhenoAge_Adapted,0.00011460869
+Time,Diabetes,7.034692e-05
+wave,Cancer,6.1768464e-05
+Time,Drink,5.333032e-05
+Diabetes,Cancer,4.565338e-05
+wave,Drink,4.4005406e-05
+wave,Education,4.17494e-05
+Time,Education,3.5033256e-05
+wave,Marital,3.146707e-05
+wave,Hypertension,2.4163988e-05
+wave,Time,0.0
+wave,Diabetes,0.0
+Time,Dyslipidemia,0.0
+wave,CVD,0.0
+wave,Smoke,0.0
+wave,BMI_New,0.0
+wave,Gender,0.0
+wave,Age_New,0.0
+wave,Dyslipidemia,0.0
+Time,Cancer,0.0
+Marital,Cancer,0.0
+Marital,BMI_New,0.0
+Time,BMI_New,0.0
+Age_New,Diabetes,0.0
+Time,Smoke,0.0
+Hypertension,BMI_New,0.0
+Dyslipidemia,BMI_New,0.0
+Smoke,BMI_New,0.0

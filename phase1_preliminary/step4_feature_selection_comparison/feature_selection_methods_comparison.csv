@@ -1,0 +1,7 @@
+Method,ROC_AUC,F1_Score,Accuracy,Features
+L1 LASSO,0.5927,0.4238,0.5881,15
+Hierarchical Clustering,0.5912,0.4253,0.5931,15
+ANOVA F-test,0.5876,0.4168,0.601,15
+Tree-Based,0.5851,0.4124,0.5868,15
+RFECV,0.5825,0.4246,0.5864,33
+Mutual Information,0.5622,0.42,0.5746,15

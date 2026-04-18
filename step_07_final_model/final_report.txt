@@ -1,0 +1,75 @@
+================================================================================
+FINAL MODEL REPORT - PHASE 2
+================================================================================
+Date: 2026-04-14 20:10:00
+
+DATASET: Sheet1 (12,329 rows, KOA rate=13.3%)
+TARGET: Symptomatic KOA (Arthritis=yes AND position_knees=yes)
+
+================================================================================
+PERFORMANCE COMPARISON
+================================================================================
+
+Phase 1 (Arthritis target, Sheet data):
+  Best AUROC: 0.7058 (Soft Voting)
+  Best model: RF+XGB+LGBM ensemble
+  Features: 17 raw
+
+Phase 2 (KOA target, Sheet1 data):
+  RF_tuned            : AUROC=0.8924
+  Ensemble_soft       : AUROC=0.8740
+  XGB_tuned           : AUROC=0.8497
+  LGBM_tuned          : AUROC=0.8370
+  CB_tuned            : AUROC=0.8239
+
+Paper (Fu et al. 2025):
+  Best AUROC: 0.9078 (XGBoost)
+  Features: 11 (LASSO, with KDM-BA)
+
+================================================================================
+KEY FINDINGS
+================================================================================
+
+1. TARGET VARIABLE CHANGE IS THE BIGGEST FACTOR
+   Arthritis (phase 1): AUROC 0.71
+   KOA (phase 2):        AUROC 0.89
+   Improvement: +0.18 (from target specificity)
+
+2. KDM-BA IS NOT A DOMINANT FEATURE
+   Paper: SHAP > 0.6 for KDM-BA
+   Our data: SHAP = 0.44 for Biological Age (XGBoost)
+   KDM-BA LASSO coef = 0 (not selected)
+   Adding KDM-BA DECREASES performance (0.89 -> 0.86)
+
+3. SHEET1'S BIOLOGICAL AGE IS ALREADY STRONG
+   RF feature importance: BA=36.9%, BMI=36.7%
+   XGBoost SHAP: BA=0.44, Gender=0.42, BMI=0.40
+   These three features dominate the model
+
+4. BIOMARKERS HURT PERFORMANCE
+   raw17:            AUROC = 0.894 (BEST)
+   raw17+biomarkers: AUROC = 0.727 (-0.167)
+   raw17+KDM-BA:     AUROC = 0.863 (-0.031)
+   raw17+all:         AUROC = 0.696 (-0.198)
+
+5. SUBGROUP ANALYSIS CONFIRMS PAPER FINDINGS
+   CVD+:  AUROC = 0.899 (highest)
+   Female: AUROC = 0.885 > Male: 0.817
+   Urban:  AUROC = 0.890 > Rural: 0.853
+
+================================================================================
+CONCLUSION
+================================================================================
+
+AUROC 0.89 achieved with RF + 17 raw features on KOA target.
+This is only 0.014 below the paper's 0.91, achieved WITHOUT KDM-BA.
+
+The performance gap with Phase 1 (0.71 -> 0.89) is primarily due to:
+  1. More specific target definition (KOA vs Arthritis)
+  2. Cleaner data (Sheet1 has biomarkers, encoded features)
+  3. Different class balance (13.3% vs 32.5%)
+
+KDM-BA calculation did NOT improve performance because:
+  - Sheet1's Biological Age is already a strong feature
+  - Log-transformed biomarkers have weak age correlation
+  - Adding biomarkers introduces noise for RF model

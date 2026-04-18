@@ -1,0 +1,6 @@
+model,auc,params
+RF_tuned,0.8924357413373712,"{'n_estimators': 500, 'min_samples_split': 2, 'min_samples_leaf': 1, 'max_depth': None, 'class_weight': None}"
+XGB_tuned,0.8496726041367262,"{'subsample': 0.9, 'scale_pos_weight': np.float64(6.508526187576127), 'reg_lambda': 1, 'reg_alpha': 0, 'n_estimators': 300, 'max_depth': 9, 'learning_rate': 0.1, 'colsample_bytree': 0.9}"
+LGBM_tuned,0.8370386031098163,"{'subsample': 0.9, 'reg_lambda': 0.1, 'reg_alpha': 0.1, 'num_leaves': 63, 'n_estimators': 200, 'max_depth': 15, 'learning_rate': 0.1, 'colsample_bytree': 0.9, 'class_weight': 'balanced'}"
+CB_tuned,0.8238767515976064,"{'learning_rate': 0.1, 'l2_leaf_reg': 3, 'iterations': 300, 'depth': 8, 'class_weights': [1, np.float64(6.508526187576127)]}"
+Ensemble_soft,0.8739983997127888,RF+XGB+LGBM

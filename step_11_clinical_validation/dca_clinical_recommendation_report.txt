@@ -1,0 +1,22 @@
+================================================================================
+DCA CLINICAL DECISION RECOMMENDATION REPORT
+================================================================================
+Date: 2026-04-18 22:46:41
+Clinical threshold band: 10% to 30% KOA risk
+Population KOA prevalence: 13.32%
+
+Interpretation key:
+- avoided_unnecessary_per_100: expected avoided unnecessary referrals/imaging per 100 patients vs treat-all.
+- relative_reduction_vs_treat_all_pct: percentage reduction against treat-all unnecessary interventions.
+
+Top recommendation:
+- Use raw17 (raw) for patients in 10%-30% risk range. Estimated mean reduction: 61.9 unnecessary knee MRI/advanced imaging referrals per 100 patients (71.4% relative reduction vs treat-all).
+- Strongest point estimate is at threshold=0.29, with up to 72.2 avoided per 100.
+
+All evaluated strategies:
+- raw17 (raw): mean gain vs treat-all=0.1608, mean avoided=61.9/100, relative reduction=71.4%, positive-threshold share=100.0%
+- raw17_plus_pheno (raw): mean gain vs treat-all=0.1523, mean avoided=58.0/100, relative reduction=66.9%, positive-threshold share=100.0%
+- raw17 (isotonic): mean gain vs treat-all=0.1377, mean avoided=53.1/100, relative reduction=61.2%, positive-threshold share=100.0%
+- raw17_plus_pheno (isotonic): mean gain vs treat-all=0.1266, mean avoided=48.4/100, relative reduction=55.9%, positive-threshold share=100.0%
+- raw17_plus_adapted_aging (raw): mean gain vs treat-all=0.1213, mean avoided=44.9/100, relative reduction=51.8%, positive-threshold share=100.0%
+- raw17_plus_adapted_aging (isotonic): mean gain vs treat-all=0.1089, mean avoided=39.9/100, relative reduction=46.0%, positive-threshold share=100.0%

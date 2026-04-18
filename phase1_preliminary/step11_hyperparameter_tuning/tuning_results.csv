@@ -1,0 +1,4 @@
+Model,ROC_AUC_mean,ROC_AUC_std,F1_mean,Best_Params
+Tuned_RF,0.7032129032223117,0.00898043887867001,0.40733892323659293,"{'n_estimators': 200, 'min_samples_split': 5, 'min_samples_leaf': 8, 'max_features': 'sqrt', 'max_depth': 10, 'class_weight': None}"
+Tuned_XGBoost,0.7051277065548807,0.00874589670063711,0.5284875480658748,"{'subsample': 0.9, 'scale_pos_weight': 2, 'reg_lambda': 0.5, 'reg_alpha': 1, 'n_estimators': 100, 'min_child_weight': 7, 'max_depth': 5, 'learning_rate': 0.05, 'gamma': 0.5, 'colsample_bytree': 0.5}"
+Tuned_LightGBM,0.7055273492593164,0.008234561206632147,0.41499949282437476,"{'subsample': 0.8, 'reg_lambda': 0.01, 'reg_alpha': 0.1, 'num_leaves': 15, 'n_estimators': 300, 'min_child_samples': 20, 'max_depth': 15, 'learning_rate': 0.01, 'colsample_bytree': 0.5, 'class_weight': None}"

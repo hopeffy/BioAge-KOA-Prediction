@@ -1,0 +1,278 @@
+====================================================================================================
+FEATURE SELECTION METHODS COMPARISON
+KOA Prediction - 6 Different Approaches
+====================================================================================================
+Started: 2026-03-03 15:08:44
+Target number of features: 15
+====================================================================================================
+
+
+====================================================================================================
+METHOD: 1. ANOVA F-test
+Time: 2026-03-03 15:08:48
+====================================================================================================
+
+Top 15 features by F-score
+Mean F-score: 56.39
+----------------------------------------------------------------------------------------------------
+
+Selected Features (15):
+   1. wave
+   2. iyear
+   3. doctor_diagnose_hypertension
+   4. doctor_diagnose_heart_disease
+   5. Hypertension
+   6. Heart_Disease
+   7. Sex_Numeric
+   8. BioAge_60_Plus
+   9. BioAge_Over_67
+  10. Comorbidity_Count
+  11. Has_Multiple_Comorbidities
+  12. Comorbidity_Risk_Score
+  13. BMI_x_BioAge
+  14. Age_x_Comorbidity
+  15. BMI_x_Comorbidity
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: ANOVA F-test
+  • Feature_Count: 15
+  • ROC_AUC: 0.5876
+  • F1_Score: 0.4168
+  • Accuracy: 0.6010
+
+
+====================================================================================================
+METHOD: 2. Mutual Information
+Time: 2026-03-03 15:08:52
+====================================================================================================
+
+Top 15 features by Mutual Information
+Mean MI score: 0.0086
+----------------------------------------------------------------------------------------------------
+
+Selected Features (15):
+   1. iyear
+   2. doctor_diagnose_dyslipidemia
+   3. Biological Age
+   4. Biological_Age
+   5. Dyslipidemia
+   6. Heart_Disease
+   7. Biological_Age_Squared
+   8. Biological_Age_Cubed
+   9. Log_Biological_Age
+  10. BioAge_60_Plus
+  11. Has_Multiple_Comorbidities
+  12. Comorbidity_Risk_Score
+  13. BMI_x_BioAge
+  14. Age_x_Comorbidity
+  15. BMI_x_Comorbidity
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: Mutual Information
+  • Feature_Count: 15
+  • ROC_AUC: 0.5622
+  • F1_Score: 0.4200
+  • Accuracy: 0.5746
+
+
+====================================================================================================
+METHOD: 3. L1 Logistic Regression (LASSO)
+Time: 2026-03-03 15:08:53
+====================================================================================================
+
+L1 regularization (C=0.1)
+Non-zero coefficients: 21
+Selected top 15 by absolute coefficient
+----------------------------------------------------------------------------------------------------
+
+Selected Features (15):
+   1. BioAge_60_Plus
+   2. Sex_Numeric
+   3. doctor_diagnose_heart_disease
+   4. wave
+   5. MET
+   6. Biological_Age_Cubed
+   7. Log_BMI
+   8. BMI_x_BioAge
+   9. BMI_Category
+  10. Hypertension
+  11. BMI_Obese
+  12. Has_Multiple_Comorbidities
+  13. Cancer
+  14. Diabetes
+  15. BioAge_Over_67
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: L1 Logistic Regression
+  • Feature_Count: 15
+  • ROC_AUC: 0.5927
+  • F1_Score: 0.4238
+  • Accuracy: 0.5881
+
+
+====================================================================================================
+METHOD: 4. Tree-Based Feature Importance
+Time: 2026-03-03 15:08:54
+====================================================================================================
+
+Tree-based feature importance (RF + XGBoost average)
+Top 15 features by importance
+----------------------------------------------------------------------------------------------------
+
+Selected Features (15):
+   1. doctor_diagnose_heart_disease
+   2. Sex_Numeric
+   3. wave
+   4. Biological Age
+   5. bmi_kg.m2
+   6. BMI_x_BioAge
+   7. MET
+   8. iyear
+   9. Age_x_Comorbidity
+  10. BMI_x_Comorbidity
+  11. BMI_Squared
+  12. BMI
+  13. Log_BMI
+  14. doctor_diagnose_diabetes
+  15. BioAge_60_Plus
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: Tree-Based Importance
+  • Feature_Count: 15
+  • ROC_AUC: 0.5851
+  • F1_Score: 0.4124
+  • Accuracy: 0.5868
+
+
+====================================================================================================
+METHOD: 5. RFECV
+Time: 2026-03-03 15:09:06
+====================================================================================================
+
+Recursive Feature Elimination with 3-fold CV
+Optimal features: 33
+Best CV score: 0.5904
+----------------------------------------------------------------------------------------------------
+
+Selected Features (33):
+   1. wave
+   2. iyear
+   3. doctor_diagnose_hypertension
+   4. doctor_diagnose_dyslipidemia
+   5. doctor_diagnose_diabetes
+   6. doctor_diagnose_heart_disease
+   7. MET
+   8. bmi_kg.m2
+   9. Biological Age
+  10. Biological_Age
+  11. BMI
+  12. Hypertension
+  13. Dyslipidemia
+  14. Diabetes
+  15. Cancer
+  16. Heart_Disease
+  17. Sex_Numeric
+  18. Biological_Age_Squared
+  19. Biological_Age_Cubed
+  20. Log_Biological_Age
+  ... and 13 more
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: RFECV
+  • Feature_Count: 33
+  • ROC_AUC: 0.5825
+  • F1_Score: 0.4246
+  • Accuracy: 0.5864
+
+
+====================================================================================================
+METHOD: 6. Hierarchical Clustering
+Time: 2026-03-03 15:09:06
+====================================================================================================
+
+Hierarchical clustering (ward linkage)
+Clusters: 15
+One representative per cluster (highest F-score)
+----------------------------------------------------------------------------------------------------
+
+Selected Features (15):
+   1. BioAge_60_Plus
+   2. BMI_x_BioAge
+   3. doctor_diagnose_diabetes
+   4. doctor_diagnose_heart_disease
+   5. doctor_diagnose_dyslipidemia
+   6. doctor_diagnose_hypertension
+   7. Age_x_Comorbidity
+   8. BMI_Category
+   9. BMI_Obese
+  10. wave
+  11. doctor_diagnose_cancer
+  12. MET
+  13. Sex_Numeric
+  14. smoke
+  15. drink
+
+----------------------------------------------------------------------------------------------------
+Performance Metrics:
+  • Method: Hierarchical Clustering
+  • Feature_Count: 15
+  • ROC_AUC: 0.5912
+  • F1_Score: 0.4253
+  • Accuracy: 0.5931
+
+
+====================================================================================================
+FEATURE OVERLAP ANALYSIS
+====================================================================================================
+
+Overlap Matrix:
+                         ANOVA F-test  Mutual Information  L1 LASSO  Tree-Based  RFECV  Hierarchical Clustering
+ANOVA F-test                     15.0                 8.0       8.0         8.0   15.0                      7.0
+Mutual Information                8.0                15.0       4.0         6.0   15.0                      4.0
+L1 LASSO                          8.0                 4.0      15.0         7.0   15.0                      8.0
+Tree-Based                        8.0                 6.0       7.0        15.0   15.0                      8.0
+RFECV                            15.0                15.0      15.0        15.0   33.0                     12.0
+Hierarchical Clustering           7.0                 4.0       8.0         8.0   12.0                     15.0
+
+Consensus Features (≥3 methods):
+  • BioAge_60_Plus: 6/6 methods
+  • BMI_x_BioAge: 6/6 methods
+  • wave: 5/6 methods
+  • doctor_diagnose_heart_disease: 5/6 methods
+  • Sex_Numeric: 5/6 methods
+  • Age_x_Comorbidity: 5/6 methods
+  • iyear: 4/6 methods
+  • Has_Multiple_Comorbidities: 4/6 methods
+  • BMI_x_Comorbidity: 4/6 methods
+  • MET: 4/6 methods
+  • doctor_diagnose_hypertension: 3/6 methods
+  • Hypertension: 3/6 methods
+  • Heart_Disease: 3/6 methods
+  • BioAge_Over_67: 3/6 methods
+  • Comorbidity_Risk_Score: 3/6 methods
+  • doctor_diagnose_dyslipidemia: 3/6 methods
+  • Biological Age: 3/6 methods
+  • Biological_Age_Cubed: 3/6 methods
+  • Log_BMI: 3/6 methods
+  • BMI_Category: 3/6 methods
+  • BMI_Obese: 3/6 methods
+  • doctor_diagnose_diabetes: 3/6 methods
+
+====================================================================================================
+FINAL SUMMARY
+====================================================================================================
+                 Method  ROC_AUC  F1_Score  Accuracy  Features
+               L1 LASSO   0.5927    0.4238    0.5881        15
+Hierarchical Clustering   0.5912    0.4253    0.5931        15
+           ANOVA F-test   0.5876    0.4168    0.6010        15
+             Tree-Based   0.5851    0.4124    0.5868        15
+                  RFECV   0.5825    0.4246    0.5864        33
+     Mutual Information   0.5622    0.4200    0.5746        15
+
+Completed: 2026-03-03 15:09:08
+====================================================================================================
