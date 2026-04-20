@@ -1,0 +1,11 @@
+======================================================================
+KEY TABLE DOT PLOTS - GENERATED FILES
+======================================================================
+Generated at: 2026-04-19 02:22:52
+
+Outputs:
+1) 01_feature_impact_auroc_dot.png
+2) 02_paper_replication_auc_f1_scatter.png
+3) 03_aging_clock_summary_dots.png
+4) 04_clinical_metrics_dot_panels.png
+5) 05_dca_clinical_decision_dot.png

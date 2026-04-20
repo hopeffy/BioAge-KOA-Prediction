@@ -1,0 +1,13 @@
+======================================================================
+PRESENTATION CORE PACK
+======================================================================
+Generated at: 2026-04-19 02:22:53
+
+Recommended storyline order:
+1) 01_feature_impact_auroc_dot.png
+2) 02_paper_replication_auc_f1_scatter.png
+3) 03_dca_clinical_decision_dot.png
+4) 04_calibration_curve_raw17.png
+
+Combined panel:
+- core_storyline_2x2_panel.png

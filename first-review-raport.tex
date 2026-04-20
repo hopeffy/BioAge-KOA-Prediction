@@ -1,0 +1,1353 @@
+﻿\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[turkish,english]{babel}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{verbatim}
+\usepackage{setspace}
+\usepackage{microtype}
+
+% Overleaf/pdflatex Unicode compatibility for verbatim-included markdown files.
+% These mappings convert unsupported symbols to ASCII-safe equivalents.
+\DeclareUnicodeCharacter{00A0}{ }
+\DeclareUnicodeCharacter{2013}{-}
+\DeclareUnicodeCharacter{2014}{-}
+\DeclareUnicodeCharacter{2018}{'}
+\DeclareUnicodeCharacter{2019}{'}
+\DeclareUnicodeCharacter{201C}{"}
+\DeclareUnicodeCharacter{201D}{"}
+\DeclareUnicodeCharacter{2026}{...}
+\DeclareUnicodeCharacter{2192}{->}
+\DeclareUnicodeCharacter{2212}{-}
+\DeclareUnicodeCharacter{2264}{<=}
+\DeclareUnicodeCharacter{2265}{>=}
+\DeclareUnicodeCharacter{00B1}{+/-}
+\DeclareUnicodeCharacter{00D7}{x}
+\DeclareUnicodeCharacter{2500}{-}
+\DeclareUnicodeCharacter{2502}{|}
+\DeclareUnicodeCharacter{2514}{|}
+\DeclareUnicodeCharacter{251C}{|}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{3em}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={KOA Entegre Adim Adim Rapor},
+  pdfauthor={BioAge-KOA-Prediction}
+}
+
+\title{Integrated Technical Report on CHARLS-Based KOA Risk Modeling:\\
+\large From Exploratory Modeling Stage to Master Clinical Pipeline (April 2026)}
+\author{BioAge-KOA-Prediction Technical Documentation Series}
+\date{20 April 2026}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+This report integrates three core project documents into a single, publication-oriented
+technical narrative: (i) the 2026-04-18 master README, (ii) the 2026-04-14 exploratory
+modeling report, and (iii) the manuscript-comparison report against Fu et al. (2025).
+The objective is to document methodological evolution, present metric-level evidence,
+and clarify the distinction between internal model evidence and external clinical validation.
+Across stages, Random Forest-based configurations remained stable at the top tier,
+while the master update standardized explainability and clinical utility layers
+(SHAP, calibration, and decision-curve analysis). In addition, this report explicitly
+addresses metric comparability across stages (e.g., AUROC 0.8967 vs 0.8916),
+frames clinical claims as internally validated decision support signals, and provides a
+reproducibility-ready execution protocol.
+\end{abstract}
+
+\textbf{Keywords:} KOA prediction, CHARLS, biological aging, SHAP,
+decision curve analysis, calibration, reproducibility.
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+KOA risk modeling should be evaluated not only by discrimination metrics but also by
+interpretability, decision relevance, and methodological traceability. The project has
+evolved through multiple experimental cycles, creating a documentation landscape that is
+rich but fragmented. This report consolidates that landscape into a single academic-style
+record, with explicit stage boundaries and evidence alignment.
+
+\section{Dataset and Cohort Definition}
+
+\subsection{Source Documents and Version Hierarchy}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{5.2cm}}
+\toprule
+Source & Date & Role & Note \\
+\midrule
+README.md & 2026-04-18 & Master reference & Declared as the consolidated master process document. \\
+faz2\_final\_raporu.md & 2026-04-14 & Exploratory stage snapshot & Captures intermediate experiments and optimization attempts. \\
+makale\_karsilastirma\_raporu.md & 2026-04-14 & Literature comparison report & Documents methodological deltas versus Fu et al. (2025). \\
+\bottomrule
+\end{longtable}
+
+\textbf{Priority rule used in this report:}
+
+\begin{enumerate}
+  \item Operational conclusions follow the master README.
+  \item Exploratory and comparison reports provide historical and analytical context.
+  \item In case of conflict, the most recent dated evidence has precedence.
+\end{enumerate}
+
+\subsection{Outcome Definition Across Stages}
+
+The major transition from the earlier stage to the exploratory modeling stage was the
+shift from a broader arthritis target to a symptomatic KOA-oriented definition. This
+transition reduced target heterogeneity and is a core explanatory factor for downstream
+performance changes.
+
+\section{Methods}
+
+This report follows a four-part synthesis method:
+
+\begin{enumerate}
+  \item summarize exploratory-stage findings using metric-level evidence,
+  \item identify methods standardized in the master pipeline,
+  \item explain deltas versus the reference manuscript,
+  \item document reproducibility procedures and assumptions.
+\end{enumerate}
+
+\subsection{Terminology Convention}
+
+To avoid mixed-language drift, the main narrative uses English as the primary academic
+language. Model names, metric names, and method labels are kept in their standard
+English forms (e.g., AUROC, PR-AUC, calibration, DCA, SHAP).
+
+\subsection{Feature and Model Workflow}
+
+The modeling workflow evaluated raw and engineered feature sets, multiple tree-based
+learners, thresholding strategies, and ensemble designs. Explainability relied on
+TreeExplainer-based SHAP summaries, interaction values, and local waterfall analysis.
+
+\subsection{Clinical Utility Layer}
+
+The master pipeline includes probability calibration (raw vs isotonic) and decision-curve
+analysis (DCA), enabling internal decision-support evaluation in a clinically relevant
+threshold range.
+
+\section{Experiments}
+
+\subsection{Exploratory Modeling Stage (formerly Faz 2)}
+
+The exploratory-stage transition introduced the following key changes:
+
+\begin{enumerate}
+  \item target narrowing toward symptomatic KOA,
+  \item activation of the Sheet1 cohort slice,
+  \item integration of biomarker-driven BA/KDM experiments.
+\end{enumerate}
+
+\subsection{Exploratory Snapshot Results (2026-04-14)}
+
+Main findings from the exploratory snapshot:
+
+\begin{enumerate}
+  \item Dataset A (12{,}329), raw17 RF: AUROC 0.8937, F1 0.7578.
+  \item Dataset B (7{,}635), raw17 RF: AUROC 0.8939, F1 0.7440.
+  \item KDM-based additions generally reduced predictive performance.
+  \item RF remained more stable than XGBoost despite thresholding and calibration trials.
+\end{enumerate}
+
+\textbf{Step 08 summary table (exploratory stage):}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}p{2.2cm}}
+\toprule
+Feature set & Model & Threshold & AUROC & F1 \\
+\midrule
+raw17 (int) & RF & default & 0.8967 & 0.760 \\
+raw17 (int) & RF & youden(0.25) & 0.8967 & 0.670 \\
+raw17 (OHE) & RF & default & 0.8954 & 0.758 \\
+raw17 (OHE) + KDM & RF & default & 0.8700 & 0.447 \\
+raw17 (OHE) + PCA & RF & default & 0.7485 & 0.028 \\
+raw17 (int) & XGBoost\_spw & default & 0.7654 & 0.396 \\
+raw17 (OHE) & XGBoost\_spw & youden(0.48) & 0.8012 & 0.450 \\
+\bottomrule
+\end{longtable}
+
+\textbf{Step 09 summary table (exploratory stage):}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4.2cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{2.4cm}}
+\toprule
+Model & AUROC & PR-AUC & F1-Macro@0.5 & F1-Macro@f1 \\
+\midrule
+RF (raw17) & 0.8967 & 0.7783 & 0.8644 & 0.8695 \\
+XGBoost\_optuna & 0.8563 & 0.7272 & 0.8487 & 0.8630 \\
+LightGBM\_optuna & 0.8652 & 0.7639 & 0.8482 & 0.8696 \\
+Stack RF+XGB\_LR & 0.8914 & 0.7829 & 0.8536 & 0.8707 \\
+Stack RF+XGB+LGBM\_LR & 0.8925 & 0.7876 & 0.8579 & 0.8718 \\
+Stack RFbal+XGB\_LR & 0.8903 & 0.7812 & 0.8542 & 0.8712 \\
+\bottomrule
+\end{longtable}
+
+\textbf{Step 10 (paper-space replication) key result:}
+
+The paper\_13\_cont\_BMI + RF configuration reached AUROC 0.8914 under 5-fold CV x 3 seed,
+placing it among the strongest exploratory-stage variants.
+
+\subsection{Master Pipeline Update (2026-04-18)}
+
+Master pipeline standardization includes:
+
+\begin{enumerate}
+  \item Step 01--11 pipeline consolidation,
+  \item expanded biological-age layer in Step 03,
+  \item SHAP/interaction/waterfall standardization in Step 04,
+  \item calibration + DCA + reporting automation in Step 11.
+\end{enumerate}
+
+\textbf{Master snapshot metrics:}
+
+\begin{enumerate}
+  \item Best discrimination (Step 11): raw17 (raw), ROC-AUC 0.8916, PR-AUC 0.7689, Brier 0.0581, ECE 0.0462.
+  \item DCA (10\%--30\%): best strategy raw17 (raw), estimated reduction of unnecessary referrals/imaging 61.9 per 100 patients versus treat-all (internal cohort estimate), relative reduction 71.4\%.
+  \item Example SHAP interactions (raw17 + hs-CRP):
+  BMI x Biological Age 0.1622,
+  Biological Age x crp\_mg.L 0.1255,
+  BMI x crp\_mg.L 0.0888,
+  Gender x Biological Age 0.0619,
+  Hypertension x Biological Age 0.0357.
+\end{enumerate}
+
+\section{Results}
+
+\subsection{Model Evolution Timeline}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{3.3cm} >{\raggedright\arraybackslash}p{2.7cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{5.2cm}}
+\toprule
+Stage & Model/Configuration & Dataset Context & AUROC & Interpretation \\
+\midrule
+Exploratory baseline & RF (raw17) & Dataset A & 0.8937 & Strong baseline after target narrowing. \\
+Exploratory baseline & RF (raw17) & Dataset B & 0.8939 & Similar top-tier discrimination in filtered cohort. \\
+Exploratory optimization & RF (raw17 int) & Step 08 trials & 0.8967 & Highest exploratory AUROC among listed trials. \\
+Paper-space replication & RF (paper\_13\_cont\_BMI) & 5-fold CV x 3 seed & 0.8914 & Competitive result under paper-like feature space. \\
+Master clinical pipeline & raw17 (raw) & Step 11 snapshot & 0.8916 & Performance retained with calibration/DCA integration. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Metric Consistency Note (0.8967 vs 0.8916)}
+
+The values 0.8967 (exploratory trials) and 0.8916 (master Step 11 snapshot)
+are close but not numerically identical because they are produced under different
+evaluation contexts. The exploratory figure reflects stage-specific optimization settings,
+whereas the master figure is reported with the clinical-evaluation stack (including OOF,
+calibration/DCA reporting flow). Therefore, these numbers should be interpreted as
+compatible evidence across stages rather than strict run-to-run duplicates.
+
+\section{Discussion}
+
+\subsection{Data and Outcome-Level Interpretation}
+
+\begin{enumerate}
+  \item All experiments are CHARLS-based, but cohort filtering differs by stage.
+  \item Outcome narrowing toward symptomatic KOA likely improved learnability by reducing label heterogeneity.
+  \item Manuscript and project pipelines are directionally aligned but not cohort-identical.
+  \item Cross-stage comparability requires explicit protocol context (split strategy, seed logic, and post-processing).
+\end{enumerate}
+
+\subsection{Model-Level Interpretation}
+
+\begin{enumerate}
+  \item RF was consistently stable across exploratory and master contexts.
+  \item XGBoost/LightGBM/CatBoost provided useful alternatives but did not dominate the primary benchmark.
+  \item Stacking and Optuna expanded search coverage and improved confidence in the final operating region.
+  \item KDM-derived feature expansions often underperformed in this cohort, suggesting signal dilution or mismatch between engineered BA assumptions and dataset-specific biomarker structure.
+\end{enumerate}
+
+\subsection{Explainability and Clinical Utility Interpretation}
+
+\begin{enumerate}
+  \item SHAP components (global, interaction, local) are now methodologically standardized in the master workflow.
+  \item Calibration and DCA outputs are integrated into a decision-support reporting layer.
+  \item The phrase ``clinical utility'' in this report denotes internal cohort net-benefit behavior, not external prospective clinical validation.
+\end{enumerate}
+
+\section{Cross-Document Change Summary (14 Apr -> 18 Apr)}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{5.2cm} >{\raggedright\arraybackslash}p{5.6cm}}
+\toprule
+Topic & 2026-04-14 snapshot (exploratory/comparison) & 2026-04-18 README master \\
+\midrule
+Document role & Exploratory closure and manuscript comparison & Operational master process document \\
+Pipeline scope & Step 01--10 emphasis, detailed optimization trials & Full Step 01--11 flow with clinical utility layer \\
+SHAP standard & Present but fragmented across trial outputs & Standardized SHAP + interaction + clinical filtering \\
+Clinical layer & Partial calibration/DCA explorations & Structured OOF + calibration + DCA summary \\
+Governance statement & Historical snapshot framing & Explicit consolidated master declaration \\
+\bottomrule
+\end{longtable}
+
+\section{Limitations and Claim Framing}
+
+\begin{enumerate}
+  \item Current evidence is based on internal validation workflows; no external cohort validation is reported here.
+  \item Net-benefit estimates from DCA should be interpreted as model-based simulation outcomes in the analyzed cohort.
+  \item Manuscript-level clinical claims should remain conservative until prospective or external retrospective validation is completed.
+\end{enumerate}
+
+\section{Reproducibility and Implementation}
+
+\subsection{Document Usage by Purpose}
+
+\begin{enumerate}
+  \item Day-to-day operational reruns and latest standardized metrics: README.
+  \item Full exploratory experiment surface and trial-level diagnostics: faz2\_final\_raporu.
+  \item Method-by-method literature delta analysis: makale\_karsilastirma\_raporu.
+\end{enumerate}
+
+\subsection{Recommended Execution Order (README-aligned)}
+
+\begin{verbatim}
+python scripts/step_01_data_prep.py
+python scripts/step_02_baseline.py
+python scripts/step_03_kdm_ba.py
+python scripts/step_04_ba_impact.py
+python scripts/step_11_clinical_validation.py
+\end{verbatim}
+
+Optional advanced stages:
+
+\begin{verbatim}
+python scripts/step_05_07_final.py
+python scripts/step_08_xgboost_fix.py
+python scripts/step_09_advanced_pipeline.py
+python scripts/step_10_paper_replication.py
+\end{verbatim}
+
+\subsection{Appendix Policy}
+
+Full raw source snapshots are intentionally retained in the appendices for engineering
+audit traceability. For journal submission, a shortened appendix (selected excerpts) plus
+repository archival links can be used as a publication-friendly variant.
+
+\section{Conclusion}
+
+This integrated report positions the project closer to a paper-ready technical standard by
+standardizing language, clarifying cross-stage metric comparability, and reframing clinical
+utility statements within internal-validation boundaries. The master README is treated as
+the authoritative operational reference, while exploratory and comparison documents are
+retained for methodological accountability. Overall, the report now functions both as an
+academic synthesis and as an auditable model-registry narrative.
+
+\newpage
+\appendix
+
+\section{Appendix A: Full README.md Snapshot}
+
+\begin{verbatim}
+# KOA (Knee Osteoarthritis) Prediction and Clinical Translation Pipeline
+
+Last Updated: 2026-04-18
+
+This repository contains an end-to-end KOA risk modeling workflow, from preprocessing experiments to clinical interpretability and publication-ready reporting.
+
+## Scope
+
+- Data preparation and baseline modeling
+- Multi-stage feature engineering and robustness evaluation
+- Biological aging signal integration (KDM, adapted PhenoAge)
+- Real SHAP interpretability and SHAP interaction analysis
+- Clinical validation with calibration and Decision Curve Analysis (DCA)
+- Automated clinician-facing recommendation text and publication paragraphs
+
+## End-to-End Process Map
+
+| Phase | Main Script(s) | Purpose | Key Output Folder |
+|---|---|---|---|
+| Step 0 | scripts/step0_baseline_comparison.py, scripts/step0_imputation_comparison.py, scripts/step0_prepare_imputed_dataset.py | Preprocessing strategy comparisons | step0_baseline_comparison, phase1_preliminary |
+| Step 1 | scripts/step1_comprehensive_comparison.py, scripts/main_pipeline.py | Baseline + FE comparison | step1_comprehensive_comparison |
+| Step 2 | scripts/step2_robustness_evaluation.py | Multi-seed robustness validation | step2_robustness_evaluation |
+| Step 3 (old track) | scripts/step3_position_knees_experiments.py, scripts/step3_robust_feature_engineering.py | Feature dominance and robust FE checks | step3_position_knees_experiments |
+| Step 4 (old track) | scripts/step4_comprehensive_feature_selection.py, scripts/step4_feature_selection_comparison.py | Feature selection method comparison | step4_feature_selection_comparison |
+| Step 5-9 | scripts/step5_domain_specific_features.py, scripts/step6_feature_quality_audit.py, scripts/step7_groupwise_ablation.py, scripts/step8_repeated_cv_validation.py, scripts/step9_composite_score_fe.py | Domain features, quality audit, ablations, repeated CV | phase1_preliminary |
+| Step 10+ optimization | scripts/step10_default_model_comparison.py, scripts/step11_to_14_model_optimization.py | Model family comparison + tuning workflow | phase1_preliminary |
+| Step 01 (new pipeline) | scripts/step_01_data_prep.py | Build modeling dataset(s) | step_01_data_prep |
+| Step 02 (new pipeline) | scripts/step_02_baseline.py | New baseline modeling stage | step_02_baseline |
+| Step 03 (new pipeline) | scripts/step_03_kdm_ba.py | KDM and adapted aging clock generation | step_03_kdm_ba |
+| Step 04 (new pipeline) | scripts/step_04_ba_impact.py | Impact analysis, real SHAP, SHAP interactions | step_04_ba_impact |
+| Step 05-10 (new pipeline) | scripts/step_05_07_final.py, scripts/step_08_xgboost_fix.py, scripts/step_09_advanced_pipeline.py, scripts/step_10_paper_replication.py | Model finalization, advanced runs, replication | step_05_replication to step_10_paper_replication |
+| Step 11 (new pipeline) | scripts/step_11_clinical_validation.py | Calibration, DCA, clinical recommendation/report text | step_11_clinical_validation |
+
+## Latest Integrated Updates (April 2026)
+
+### 1) Step 03: Aging Clock Layer Extended
+
+Script: scripts/step_03_kdm_ba.py
+
+Added/updated outputs:
+- BA_KDM_log
+- BA_KDM_orig
+- BIR_log
+- BIR_orig
+- PhenoAge_Adapted
+- PhenoAge_Adapted_Accel
+- Quartiles including PhenoAge_Adapted_Qint
+
+Main artifacts:
+- step_03_kdm_ba/dataset_A_with_kdm_ba.csv
+- step_03_kdm_ba/dataset_B_with_kdm_ba.csv
+- step_03_kdm_ba/step03_report.txt
+
+### 2) Step 04: Real SHAP + Clinical Interaction Filtering
+
+Script: scripts/step_04_ba_impact.py
+
+What is now enforced:
+- Real SHAP with TreeExplainer (no feature-importance proxy)
+- SHAP interaction values for XGBoost
+- SHAP waterfall local explanations for representative high-risk/median-risk cases
+- Clinical interaction filtering layer for medically meaningful pairs
+
+Clinical interaction filter targets:
+- Biological Age
+- BMI/BMI_New
+- Hypertension
+- Gender
+- hs-CRP (crp_mg.L / crp_original, when available)
+
+SHAP analyses currently generated:
+- raw17
+- raw17 + PhenoAge_Adapted
+- raw17 + hs-CRP (optional, if crp_mg.L exists)
+
+Main artifacts:
+- step_04_ba_impact/shap_importance_xgb.csv
+- step_04_ba_impact/shap_importance_xgb_raw17_plus_pheno.csv
+- step_04_ba_impact/shap_importance_xgb_raw17_plus_hscrp.csv
+- step_04_ba_impact/shap_interactions_xgb_raw17.csv
+- step_04_ba_impact/shap_interactions_xgb_raw17_plus_pheno.csv
+- step_04_ba_impact/shap_interactions_xgb_raw17_plus_hscrp.csv
+- step_04_ba_impact/shap_interactions_clinical_raw17.csv
+- step_04_ba_impact/shap_interactions_clinical_raw17_plus_pheno.csv
+- step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
+- step_04_ba_impact/shap_summary_xgb_raw17.png
+- step_04_ba_impact/shap_summary_xgb_raw17_plus_pheno.png
+- step_04_ba_impact/shap_summary_xgb_raw17_plus_hscrp.png
+- step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png
+- step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png
+- step_04_ba_impact/shap_waterfall_xgb_raw17_median_risk_case.png
+- step_04_ba_impact/shap_waterfall_cases_raw17.csv
+- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17.png
+- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_pheno.png
+- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png
+- step_04_ba_impact/step04_report.txt
+
+### 3) Step 11: Clinical Translation + Publication Text Automation
+
+Script: scripts/step_11_clinical_validation.py
+
+What is now included:
+- OOF probability evaluation
+- Raw vs isotonic comparison
+- Calibration tables/curves
+- DCA net-benefit curves
+- 10%-30% threshold-band clinical decision summary
+- Automated recommendation text (clinician-facing)
+- Automated publication-ready Methods/Results paragraphs (EN/TR)
+
+Main artifacts:
+- step_11_clinical_validation/clinical_metrics_summary.csv
+- step_11_clinical_validation/step11_clinical_validation_report.txt
+- step_11_clinical_validation/dca_clinical_decision_summary.csv
+- step_11_clinical_validation/dca_clinical_recommendation_report.txt
+- step_11_clinical_validation/step11_publication_paragraphs.txt
+- step_11_clinical_validation/calibration_curve_raw17.png
+- step_11_clinical_validation/dca_curve_raw17.png
+
+## Current Key Results Snapshot
+
+Based on latest runs in this workspace:
+
+- Best discrimination among evaluated Step 11 configs:
+  - raw17 (raw)
+  - ROC-AUC: 0.8916
+  - PR-AUC: 0.7689
+  - Brier: 0.0581
+  - ECE: 0.0462
+
+- DCA clinical utility in 10%-30% threshold band:
+  - Best strategy: raw17 (raw)
+  - Estimated avoided unnecessary referrals/imaging: 61.9 per 100 patients vs treat-all
+  - Relative reduction: 71.4%
+
+- Clinical SHAP interactions (raw17 + hs-CRP example):
+  - BMI x Biological Age: INT=0.1622
+  - Biological Age x crp_mg.L: INT=0.1255
+  - BMI x crp_mg.L: INT=0.0888
+  - Gender x Biological Age: INT=0.0619
+  - Hypertension x Biological Age: INT=0.0357
+
+## Evidence-Backed Findings (English)
+
+1. Biomechanical stress is a dominant model mechanism.
+  Evidence: [SHAP interaction heatmap (raw17 + hs-CRP)](step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png), [Clinical interaction table](step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv)
+
+2. Inflammaging signal is explicitly captured as a high-impact interaction.
+  Evidence: [SHAP summary (raw17 + hs-CRP)](step_04_ba_impact/shap_summary_xgb_raw17_plus_hscrp.png), [Clinical interaction table](step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv)
+
+3. Local explanations are clinically interpretable at patient level.
+  Evidence: [Waterfall - high-risk positive case](step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png), [Waterfall - high-risk negative case](step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png), [Waterfall case index](step_04_ba_impact/shap_waterfall_cases_raw17.csv)
+
+4. The raw17 model provides meaningful net clinical benefit in the 10%-30% threshold band.
+  Evidence: [DCA curve (raw17)](step_11_clinical_validation/dca_curve_raw17.png), [DCA decision summary](step_11_clinical_validation/dca_clinical_decision_summary.csv), [Clinical recommendation report](step_11_clinical_validation/dca_clinical_recommendation_report.txt)
+
+5. Probability reliability is documented with explicit calibration diagnostics.
+  Evidence: [Calibration curve (raw17)](step_11_clinical_validation/calibration_curve_raw17.png), [Calibration table (raw)](step_11_clinical_validation/calibration_table_raw17_raw.csv), [Calibration table (isotonic)](step_11_clinical_validation/calibration_table_raw17_isotonic.csv)
+
+## Core Figure Set (for Manuscript)
+
+Use these three figure types as the primary visual package:
+
+1. SHAP explanation (waterfall + interaction)
+  - step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png
+  - step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png
+  - step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png
+  - step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
+
+2. Decision Curve Analysis (DCA)
+  - step_11_clinical_validation/dca_curve_raw17.png
+  - step_11_clinical_validation/dca_clinical_decision_summary.csv
+  - step_11_clinical_validation/dca_clinical_recommendation_report.txt
+
+3. Calibration curve
+  - step_11_clinical_validation/calibration_curve_raw17.png
+  - step_11_clinical_validation/calibration_table_raw17_raw.csv
+  - step_11_clinical_validation/calibration_table_raw17_isotonic.csv
+
+## Recommended Execution Order
+
+Use this order for a clean full rerun of the new pipeline:
+
+```powershell
+# 1) Activate environment
+cd c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data
+.\env\Scripts\Activate.ps1
+
+# 2) Build datasets
+python scripts/step_01_data_prep.py
+
+# 3) Baseline
+python scripts/step_02_baseline.py
+
+# 4) KDM + adapted aging clocks
+python scripts/step_03_kdm_ba.py
+
+# 5) SHAP + impact + replication
+python scripts/step_04_ba_impact.py
+
+# 6) Clinical validation + DCA + publication text
+python scripts/step_11_clinical_validation.py
+```
+
+Optional advanced/final stages:
+
+```powershell
+python scripts/step_05_07_final.py
+python scripts/step_08_xgboost_fix.py
+python scripts/step_09_advanced_pipeline.py
+python scripts/step_10_paper_replication.py
+```
+
+## Environment and Dependencies
+
+Install/update dependencies:
+
+```powershell
+cd c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data
+.\env\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Important packages include:
+- scikit-learn
+- xgboost
+- lightgbm
+- catboost
+- shap (real SHAP analysis)
+- pandas, numpy, matplotlib
+
+## Output Folders at a Glance
+
+- step_03_kdm_ba: aging clocks and datasets with BA extensions
+- step_04_ba_impact: SHAP, SHAP interactions, clinical interaction subsets, replication/impact outputs
+- step_11_clinical_validation: calibration, DCA, clinical recommendation reports, publication paragraphs
+
+## Notes for Manuscript Preparation
+
+If manuscript drafting starts immediately, use these two files first:
+- step_11_clinical_validation/step11_publication_paragraphs.txt
+- step_11_clinical_validation/dca_clinical_recommendation_report.txt
+
+For mechanistic interpretability claims, cite:
+- step_04_ba_impact/shap_interactions_clinical_raw17.csv
+- step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
+- step_04_ba_impact/shap_interactions_clinical_raw17_plus_pheno.csv
+
+## Legacy Notes
+
+Older exploratory stage summaries are still preserved in repository outputs and scripts.
+This README is now the consolidated master process document for current and future runs.
+
+\end{verbatim}
+
+\newpage
+\section{Appendix B: Full faz2\_final\_raporu.md Snapshot}
+
+\begin{verbatim}
+# FAZ 2 FINAL RAPORU: KOA Tahmin Modeli
+
+**Tarih**: 2026-04-14  
+**Proje**: CHARLS verisi ile Diz Osteoartriti (KOA) Risk Tahmini  
+**Makale**: Fu et al. (2025) PLOS ONE - "Biological age threshold is associated with symptomatic knee osteoarthritis risk"
+
+---
+
+## 1. Proje Özeti
+
+Bu çalışma, CHARLS (China Health and Retirement Longitudinal Study) verisini kullanarak semptomatik diz osteoartriti (KOA) riskini tahmin eden bir binary classification modeli geliştirmeyi amaçlamaktadır. Çalışma iki faza ayrılmıştır:
+
+| | Faz 1 (Arsiv) | Faz 2 (Guncel) |
+|---|---|---|
+| Veri Kaynagi | Sheet (18 kolon, 38,800 satir) | Sheet1 (28 kolon, 15,545 satir) |
+| Hedef Degisken | Arthritis (genel, %32.5) | KOA (symptomatic, %13.3) |
+| Biyobelirtec | YOK | 8 adet (log-transformed) |
+| En Iyi AUROC | 0.7058 | **0.8924** |
+| En Iyi Model | Soft Voting Ensemble | RandomForest (500 tree) |
+
+---
+
+## 2. Kritik Kesif: Sheet1
+
+Excel dosyasindaki ikinci sheet (Sheet1) daha once hic kullanilmamisti. Bu sheet icerisinde:
+
+- **KOA hedef degiskeni** (makalenin "Symptomatic KOA" tanimina esit)
+- **8 serum biyobelirteci** (KDM-BA hesaplamasi icin gereken: kolesterol, trigliserid, HbA1c, BUN, kreatinin, sistolik KB, hs-CRP, trombosit)
+- **Daha zengin feature seti** (28 kolon vs Sheet'in 18 kolonu)
+- **Daha temiz veri** (biyobelirteclerde %0 eksik, sadece position_knees %20.7)
+
+---
+
+## 3. Veri Hazirlama (Step 01)
+
+### KOA Tanimi ve Dogrulama
+- **KOA = Arthritis=yes AND position_knees=yes** (%100 eslesme dogrulandi)
+- **position_knees ve Arthritis leakage olarak cikarildi** (KOA bunlardan turetildi)
+- **position_knees=NaN olan 3,216 satir cikarildi**
+
+### Veri Setleri
+| Veri Seti | Satir | KOA Orani | Aciklama |
+|-----------|-------|-----------|----------|
+| Dataset A | 12,329 | 13.3% | position_knees dolu |
+| Dataset B | 7,635 | 14.2% | BA >= 55 filtreli |
+
+### Encoding Mapping
+| Kolon | Encoding |
+|-------|----------|
+| Gender | 1=Male, 2=Female |
+| Age_New | 1=younger (45-59), 2=older (60+) |
+| BMI_New | 1=underweight/normal, 2=overweight, 3=obese |
+| Marital | 1=married, 2=other |
+| Education | 1=low, 2=medium, 3=high |
+| Residence | 1=urban, 2=rural |
+| Binary disease | 0=no, 1=yes |
+
+---
+
+## 4. Baseline Model Sonuclari (Step 02)
+
+| Veri Seti | Feature Set | Model | AUROC | F1 |
+|-----------|-------------|-------|-------|-----|
+| A (12,329) | raw17 | **RandomForest** | **0.8937** | **0.7578** |
+| B (7,635) | raw17 | **RandomForest** | **0.8939** | **0.7440** |
+| A | raw17+biomarkers | RandomForest | 0.7269 | 0.0283 |
+| A | raw17 | XGBoost | 0.8048 | 0.3139 |
+| A | raw17 | CatBoost | 0.7113 | 0.0598 |
+| A | raw17 | LogisticRegression | 0.6579 | 0.0072 |
+
+**Kritik bulgu**: Biyobelirtec eklemek RF'yi 0.89'dan 0.73'e dusuruyor!
+
+### RF Feature Importance (raw17)
+| Rank | Feature | Importance |
+|------|---------|-----------|
+| 1 | Biological Age | 36.9% |
+| 2 | BMI | 36.7% |
+| 3 | Education | 3.2% |
+| 4 | Drink | 2.6% |
+| 5 | Hypertension | 2.5% |
+
+---
+
+## 5. KDM-Biyolojik Yas Hesaplamasi (Step 03)
+
+### Yontem
+Klemera-Doubal Method (KDM) ile 8 biyobelirtecten biyolojik yas hesaplandi.
+
+### Biyobelirtec-Yas Korelasyonlari
+| Biyobelirtec | r (log) | R^2 |
+|-------------|---------|-----|
+| sbp.mean | 0.4214 | 0.1776 |
+| creatinine | 0.3471 | 0.1205 |
+| BUN | 0.3089 | 0.0954 |
+| crp | 0.2080 | 0.0433 |
+| HbA1c | 0.1420 | 0.0202 |
+| plt | -0.1423 | 0.0202 |
+| TC | 0.0683 | 0.0047 |
+| TG | -0.0392 | 0.0015 |
+
+### KDM-BA Sonuclari
+| Metrik | Biological Age | KDM-BA (log) | KDM-BA (orig) |
+|--------|---------------|--------------|----------------|
+| KOA korelasyonu | 0.0383 | 0.0182 | 0.0208 |
+| AUROC (univariate) | 0.5356 | 0.5158 | 0.5187 |
+| OR (per 1 year) | 1.0115 | 1.0050 | 1.0057 |
+
+**Kritik bulgu**: KDM-BA, Biological Age'den DAHA DUSUK KOA korelasyonuna sahip. Makalenin SHAP>0.6 bulgusu burada gecerli degil.
+
+---
+
+## 6. SHAP ve Feature Impact Anailzi (Step 04)
+
+### XGBoost SHAP Feature Importance
+| Rank | Feature | SHAP |
+|------|---------|------|
+| 1 | **Biological Age** | **0.4394** |
+| 2 | Gender | 0.4249 |
+| 3 | BMI | 0.4026 |
+| 4 | Residence | 0.3218 |
+| 5 | Education | 0.2118 |
+| 6 | CVD | 0.1775 |
+| 7 | Drink | 0.1159 |
+| 8 | Age_New | 0.0926 |
+| 9 | Smoke | 0.0863 |
+| 10 | Dyslipidemia | 0.0752 |
+
+Paper karsilastirma: Paper SHAP>0.6 (BA), Bizim SHAP=0.44 (BA)
+
+### Feature Impact Comparison
+| Feature Set | AUROC | Fark (vs raw17) |
+|-------------|-------|------------------|
+| **raw17** | **0.8937** | - |
+| raw17+KDM_orig | 0.8652 | -0.029 |
+| raw17+KDM_log | 0.8626 | -0.031 |
+| raw17+KDM_quartile | 0.8422 | -0.052 |
+| raw17+BIR | 0.7949 | -0.099 |
+| raw17+biomarkers | 0.7269 | **-0.167** |
+| raw17+KDM_biomarkers | 0.7178 | -0.176 |
+| raw17+all | 0.6958 | -0.198 |
+
+**Sonuc**: Her tur ekstra feature eklemek performansi dusuruyor. Raw 17 feature en iyi.
+
+### LASSO Feature Selection
+21/27 feature secildi (C=0.1). Not: BA_KDM_log LASSO coef = 0 (secilmadi!)
+
+---
+
+## 7. Makale Replikasyonu (Step 04)
+
+| Config | Model | AUROC | F1 |
+|--------|-------|-------|-----|
+| raw17 | RandomForest | **0.8937** | **0.7578** |
+| paper_11 | RandomForest | 0.8459 | 0.7039 |
+| raw17 | XGBoost+scaled | 0.8327 | 0.5520 |
+| raw17 | XGBoost | 0.8048 | 0.3139 |
+| raw17 | LightGBM | 0.7757 | 0.1342 |
+| raw17 | CatBoost | 0.7113 | 0.0598 |
+
+---
+
+## 8. Hiperparametre Tuning (Step 05)
+
+| Model | AUROC (CV) | Best Params |
+|-------|-----------|-------------|
+| **RF_tuned** | **0.8924** | n_estimators=500, max_depth=None, min_samples_leaf=1 |
+| Ensemble | 0.8740 | RF+XGB+LGBM soft voting |
+| XGB_tuned | 0.8497 | n=300, depth=9, lr=0.1, scale_pos_weight=6.5 |
+| LGBM_tuned | 0.8370 | n=200, depth=15, lr=0.1, class_weight=balanced |
+| CB_tuned | 0.8239 | n=300, depth=8, lr=0.1, class_weights=[1,6.5] |
+
+---
+
+## 9. RCS ve Alt Grup Analizleri (Step 06)
+
+### BA-KOA Nonlinear Relationship
+- BA OR per year: **1.012** (makale: 1.012)
+- BA AUROC (univariate): 0.536
+- Quartil OR (Q4 vs Q1): **1.414** (makale: 1.4519)
+- Threshold: ~55-58 yasinda KOA artis egilimi
+
+### Subgroup Analysis
+| Grup | n | KOA% | AUROC |
+|------|---|------|-------|
+| **CVD+** | 1,304 | 23.2% | **0.899** |
+| Female | 6,443 | 16.9% | 0.885 |
+| Urban | 7,954 | 15.8% | 0.890 |
+| All | 12,329 | 13.3% | 0.857 |
+| Hypertension+ | 3,142 | 15.8% | 0.878 |
+| Male | 5,886 | 9.4% | 0.817 |
+| Rural | 4,375 | 8.7% | 0.853 |
+
+Paper bulgusu: "BA-KOA iliskisi kadinlarda, kirsal bolgede, CVD+'da daha guclu" → **KISMEN DOGRULANDI**
+
+---
+
+## 10. Makale Karsilastirma Tablosu (Guncel)
+
+| Metrik | Makale (Fu 2025) | Faz 2 (Bizim) | Faz 1 (Eski) | Fark (Makale-Faz2) |
+|--------|-------------------|---------------|---------------|---------------------|
+| **En Iyi AUROC** | 0.9078 | **0.8924** | 0.7058 | **-0.015** |
+| En Iyi Model | XGBoost | RandomForest | Soft Voting | - |
+| Feature Sayisi | 11 (LASSO) | 17 (raw) | 17 (raw) | -6 |
+| Veri Buyuklugu | 9,505 | 12,329 | 18,046 | - |
+| Sinif Orani | 10.5% | 13.3% | 32.5% | - |
+| BA Hesaplama | KDM (SHAP>0.6) | Biological Age (SHAP=0.44) | Ham | - |
+| Hedef Tanimi | Symptomatic KOA | Symptomatic KOA | Arthritis (genel) | Ayni |
+| Encoding | One-hot | Integer | Label | Farkli |
+| Standartizasyon | Z-score | Z-score | Z-score | Ayni |
+
+---
+
+## 11. Kritik Bulgular ve Cikarimlar
+
+### 1. Hedef Degiskeni Degisimi En Buyuk Etki
+- Arthritis (genel, %32.5) → KOA (symptomatic, %13.3)
+- AUROC: 0.71 → 0.89 (**+0.18 artis**)
+- Daha spesifik hedef = daha learnable problem
+
+### 2. KDM-BA Bekleneni Vermedi
+- Sheet1'deki `Biological Age` zaten guclu bir predictor (SHAP=0.44)
+- KDM-BA hesaplandi ama KOA korelasyonu cok dusuk (r=0.02)
+- LASSO KDM-BA'yi secmedi (coef=0)
+- Sebep: Sheet1'deki biyobelirtecler yasla zayif korelasyonlu (en yuksek r=0.42)
+
+### 3. Biyobelirtec Eklemek Zararli
+- RF raw17: 0.89
+- RF raw17+biyobelirtec: 0.73 (**-0.16**)
+- Sebep: RF'in yuksek boyutlu veride overfitting yapmasi, biyobelirteclerin noise eklemesi
+
+### 4. Random Forest En Iyi Model
+- RF raw17: AUROC=0.89, F1=0.76
+- XGBoost: AUROC=0.80, F1=0.31 (class imbalance'dan etkilendi)
+- RF class imbalance'i daha iyi handle ediyor
+
+### 5. Kalan 0.015'lik Farkin Olasi Kaynaklari
+1. One-hot encoding vs integer encoding
+2. LASSO ile secilmis 11 feature vs 17 raw feature
+3. XGBoost hiperparametre optimizasyonu
+4. Veri seti farki (9,505 vs 12,329; farkli dislama kriterleri)
+5. Makalenin KDM-BA'si farkli veri kaynagindan hesaplanmis olabilir
+
+---
+
+## 12. Dosya Yapisi
+
+```
+bioinformatics-data/
+├── phase1_preliminary/          (Faz 1 arsiv, 22 step klasoru)
+├── step_01_data_prep/           (Dataset A/B, log ters donusum)
+├── step_02_baseline/            (Baseline sonuclar)
+├── step_03_kdm_ba/              (KDM-BA hesaplama sonuclar)
+├── step_04_ba_impact/            (SHAP, feature impact, makale replikasyon)
+├── step_07_final_model/          (Hiperparametre tuning, final rapor)
+├── scripts/                      (Python scriptleri)
+├── memory/                       (Proje hafizasi)
+├── results/                      (Faz 1 sonuclar)
+├── Raw Data .xlsx                (Ana veri dosyasi)
+└── makale_karsilastirma_raporu.md
+```
+
+---
+
+
+Geliştirme olarak yapılacaklar:
+
+## 1. Kilitlenen XGBoost'u "Uyandırmak" (Threshold & Kalibrasyon)
+Raporunuzdaki en büyük anormallik şurada: Tabular (tablo) verilerde XGBoost'un Random Forest'ın bu kadar gerisinde kalması (RF: 0.89 vs XGB: 0.80) nadir görülen bir durumdur. Özellikle XGBoost'un F1 skorunun 0.31'de kalması, modelin olasılık (probability) hesaplamalarında değil, sınıflandırma eşiğinde (decision threshold) çuvalladığını gösteriyor. Sınıf dengesizliği (%13.3 KOA) XGBoost'u şaşırtmış.
+
+Hamle: Modeller varsayılan olarak tahmini >0.5 ise "Hasta (1)", <0.5 ise "Sağlıklı (0)" der. XGBoost için bu eşik değerini 0.5'te bırakmayın. ROC eğrisi üzerinden Youden İndeksi (Sensitivity + Specificity - 1) hesaplayarak en optimal kesim noktasını (örneğin 0.18 veya 0.22) bulun.
+
+Kalibrasyon: Modelinizin çıktısını CalibratedClassifierCV (Isotonic Regression) sargısına alarak olasılık kalibrasyonu yapın. Bu, XGBoost'un performansını anında yukarı çekecektir.
+
+## 2. Encoding Hatasını Düzeltmek (Integer vs. One-Hot)
+Makale kategorik değişkenler için One-Hot Encoding kullanmış, siz Integer Encoding kullanmışsınız.
+
+Neden Önemli? Integer encoding algoritmaya matematiksel bir hiyerarşi dayatır. Örneğin; Residence değişkeninde "Urban=1, Rural=2" yaptığınızda, model "Rural, Urban'ın iki katı büyüklüğündedir" gibi yanlış bir matematiksel ilişki kurabilir. Bu durum ağaç tabanlı modellerde (split noktalarında) verimliliği düşürür, LASSO gibi regresyon temelli feature selection yöntemlerini ise tamamen bozar.
+
+Hamle: Kategorik değişkenlerinizi (Gender, Marital, Education, Residence) pd.get_dummies veya OneHotEncoder ile dönüştürüp modeli tekrar eğitin.
+
+## 3. Biyobelirteç Gürültüsünü Filtrelemek (PCA Hamlesi)
+Raporunuzdaki kilit bulgulardan biri: Biyobelirteçleri eklemek RF modelinin skorunu 0.89'dan 0.73'e düşürüyor. Bu, modellerinizin yüksek boyutluluk (curse of dimensionality) ve gürültü nedeniyle aşırı öğrenmeye (overfit) düştüğünü kanıtlar. Biyobelirteçleri doğrudan modele vermek yerine onları sıkıştırmalısınız.
+
+Hamle: 8 biyobelirteç sütununa PCA (Temel Bileşen Analizi) uygulayın. 8 sütunu, varyansın %80'ini açıklayan 1 veya 2 ana bileşene (PC1, PC2) indirgeyin. Bu yeni sütunları (Örn: Metabolic_Component, Inflammatory_Component olarak isimlendirebilirsiniz) modele verin. Böylece gürültüyü silip sadece sinyali modele aktarmış olursunuz.
+
+## 4. Makalenin SHAP Farlılaştırması
+Makalede KDM-BA'nın SHAP değerinin >0.6 çıkması, sizin bulduğunuz Biyolojik Yaşın SHAP değerinden (0.44) çok daha yüksek. Bu durum, makale yazarlarının KDM-BA hesaplarken parametreleri (Klemera-Doubal formülündeki katsayıları) sadece CHARLS veri setine göre değil, belki de sağlıklı bir alt popülasyona göre normalize etmiş olabileceğinden kaynaklanıyor olabilir.
+
+Hamle: LASSO'nun biyolojik yaşı hiç seçmemesi, biyolojik yaşın diğer değişkenler (örneğin Kronolojik Yaş veya Tansiyon) ile yüksek korelasyona (Multicollinearity) sahip olduğunu ve LASSO'nun katsayıyı sıfırladığını gösteriyor olabilir. Feature selection yaparken Biyolojik Yaşı modele "zorunlu (forced)" olarak dahil edip diğerlerini LASSO ile seçmeyi deneyin.
+
+---
+
+## 13. Step 08: XGBoost Fix & Encoding Improvements
+
+### Yapılanlar
+- One-hot encoding (Gender, Age_New, Marital, Education, Residence, BMI_New)
+- XGBoost scale_pos_weight + Youden threshold optimizasyonu
+- Probability calibration (Isotonic Regression)
+- Forced BA LASSO feature selection
+- PCA on biomarkers
+
+### Sonuçlar
+| Feature Set | Model | Threshold | AUROC | F1 |
+|-------------|-------|-----------|-------|-----|
+| raw17 (int) | RF | default | 0.8967 | 0.760 |
+| raw17 (int) | RF | youden(0.25) | 0.8967 | 0.670 |
+| raw17 (OHE) | RF | default | 0.8954 | 0.758 |
+| raw17 (OHE) + KDM | RF | default | 0.8700 | 0.447 |
+| raw17 (OHE) + PCA | RF | default | 0.7485 | 0.028 |
+| raw17 (int) | XGBoost_spw | default | 0.7654 | 0.396 |
+| raw17 (OHE) | XGBoost_spw | youden(0.48) | 0.8012 | 0.450 |
+
+**Sonuc**: One-hot encoding RF'i hafif düşürdü (0.8967→0.8954), KDM-BA ve PCA eklemek bariz düşürdü.
+
+---
+
+## 14. Step 09: Advanced Pipeline (PR-AUC, Optuna, Stacking)
+
+### Yapılanlar
+- PR-AUC ve F1-Macro değerlendirme metrikleri eklendi
+- Youden's J ve F1-optimal threshold araması
+- Optuna ile hiperparametre optimizasyonu (XGBoost 80 trial, LightGBM 50 trial)
+- Klinik interaksiyon değişkenleri: delta_BA, CVD×KDM_BA, CVD×delta_BA
+- Stacking ensemble: RF + XGBoost → LR, RF + XGBoost + LightGBM → LR
+
+### Sonuçlar
+| Model | AUROC | PR-AUC | F1-Macro@0.5 | F1-Macro@f1 |
+|-------|-------|--------|---------------|--------------|
+| **RF (raw17)** | **0.8967** | **0.7783** | 0.8644 | 0.8695 |
+| XGBoost_optuna | 0.8563 | 0.7272 | 0.8487 | 0.8630 |
+| LightGBM_optuna | 0.8652 | 0.7639 | 0.8482 | 0.8696 |
+| Stack RF+XGB_LR | 0.8914 | 0.7829 | 0.8536 | 0.8707 |
+| Stack RF+XGB+LGBM_LR | 0.8925 | 0.7876 | 0.8579 | 0.8718 |
+| Stack RFbal+XGB_LR | 0.8903 | 0.7812 | 0.8542 | 0.8712 |
+
+### Klinik İnteraksiyon Değişkenleri Etkisi
+- delta_BA (= KDM_BA - Biological Age), CVD×KDM_BA, CVD×delta_BA eklendiğinde AUROC **0.90'den 0.82'e düşüyor**
+- Bu değişkenler modele gürültü ekliyor
+
+### Optuna En İyi Parametreler
+**XGBoost**: n=504, depth=7, lr=0.242, subsample=0.78, colsample=0.65, spw=5.86, reg_alpha=0.035
+**LightGBM**: n=575, depth=12, leaves=49, lr=0.244, subsample=0.62, colsample=0.97, spw=4.66
+
+---
+
+## 15. Step 10: Makale Replikasyonu (Exact Feature Space)
+
+### Yaklaşım
+Makalenin (Fu et al. 2025) SHAP plot'undaki 13 feature'ı kullanarak birebir replikasyon:
+- Paper 11 (LASSO-selected): BA, Gender, Education, Residence, Hypertension, Dyslipidemia, CVD, Smoke, Drink, BMI_New, Cancer
+- Paper 13 (full SHAP): +Marital, Diabetes
+- Paper 13 cont BMI: BMI_New yerine continuous BMI
+
+### Metodoloji
+- One-hot encoding (kategorik değişkenler)
+- Z-score standardizasyonu (sürekli değişkenler)
+- 70/30 stratified train/test split (makalenin yöntemi)
+- 5-fold CV × 3 seed (robust değerlendirme)
+- Optuna XGBoost optimizasyonu (100 trial)
+
+### Sonuçlar (5-Fold CV × 3 Seed)
+
+| Feature Set | Model | AUROC | PR-AUC | F1-Macro@f1 |
+|-------------|-------|-------|--------|-------------|
+| **paper_13_cont_BMI** | **RF** | **0.8914** | **0.7628** | **0.8692** |
+| paper_13_cont_BMI | XGB_optuna | 0.8603 | 0.7314 | 0.8598 |
+| paper_13 (BMI_New) | RF | 0.8544 | 0.6030 | 0.8394 |
+| paper_13 | XGB_default | 0.7677 | 0.3987 | 0.6572 |
+| paper_11 | RF | 0.8497 | 0.5837 | 0.8361 |
+| paper_11 | XGB_spw | 0.7279 | 0.3142 | 0.6053 |
+| paper_11 | XGB_default | 0.7613 | 0.3865 | 0.6530 |
+
+### Sonuçlar (70/30 Split)
+
+| Feature Set | Model | AUROC | PR-AUC | F1-Macro@f1 |
+|-------------|-------|-------|--------|-------------|
+| paper_13_cont_BMI | RF | 0.8622 | 0.6982 | 0.8314 |
+| paper_13_cont_BMI | XGB_optuna | 0.8292 | 0.6526 | 0.8181 |
+| paper_13_cont_BMI | XGB_spw | 0.8097 | 0.5585 | 0.7432 |
+| paper_11 | RF | 0.8183 | 0.5119 | 0.7976 |
+| paper_11 | XGB_spw | 0.7772 | 0.4048 | 0.6771 |
+
+### Optuna XGBoost En İyi Parametreler (Paper 13 features)
+- n_estimators=438, max_depth=7, lr=0.141, subsample=0.82, colsample=0.89
+- scale_pos_weight=3.66, reg_alpha=0.011
+
+### Kritik Bulgular
+
+1. **Continuous BMI > BMI_New (kategorik)**: 0.8914 vs 0.8544
+   - BMI'yi kategorik (1/2/3) olarak kodlamak bilgi kaybına neden oluyor
+   - Continuous BMI modelin ince gradyanları yakalamasına izin veriyor
+
+2. **Paper 11 + Marital + Diabetes = 0.04 AUROC artışı** (0.8497 → 0.8914)
+   - Marital ve Diabetes önemli feature'lar
+
+3. **RF > XGBoost (tüm feature setlerinde)**
+   - Makale XGBoost ile 0.9078'e ulaşıyor ama bizim verimizde RF tutarlı şekilde daha iyi
+   - XGBoost sınıf dengesizliğinde (%13.3) zorlanıyor
+
+4. **Makale farkı (0.9078 - 0.8914 = 0.0164)** hâlâ kapanamadı
+
+### Makale ile Kalan Farkın Nedenleri
+
+1. **Veri seti farkı**: Makale 9,505 satır (BA≥55 filtresi + listwise deletion), biz 12,329
+2. **Sınıf oranı**: Makale %10.5, biz %13.3
+3. **XGBoost performans farkı**: Bizim verimizde RF > XGBoost; makalede XGBoost > RF (0.9078 vs 0.7393)
+4. **KDM-BA hesaplama**: Makalenin KDM-BA'sı SHAP>0.6 ile baskın feature; bizim verimizde Biological Age SHAP=0.44
+
+---
+
+## 16. Tüm Adımların Karşılaştırma Özeti
+
+| Step | Yaklaşım | En İyi AUROC | PR-AUC | F1-Macro | Model |
+|------|----------|-------------|--------|----------|-------|
+| 02 | Baseline (raw17) | 0.8937 | - | 0.7578 | RF |
+| 03 | KDM-BA eklendi | 0.8652 | - | - | RF |
+| 05-07 | Hiperparametre tuning | 0.8924 | - | - | RF_tuned |
+| 08 | XGBoost fix + OHE | 0.8967 | - | 0.7596 | RF |
+| 09 | Optuna + Stacking | 0.8925 | 0.7876 | 0.8718 | Stack_RF+XGB+LGBM |
+| 10 | Paper replikasyon | **0.8914** | 0.7628 | 0.8692 | RF (paper_13_contBMI) |
+| **Makale** | **LASSO 11 + XGBoost** | **0.9078** | - | - | **XGBoost** |
+
+### Toplam İyileşme
+- Faz 1'den (Arthritis): 0.7058 → 0.8967 = **+0.19**
+- Makaleye kalan fark: 0.9078 - 0.8967 = **0.011**
+- Paper replikasyon özelinde kalan fark: 0.9078 - 0.8914 = **0.016**
+
+---
+
+## 17. Güncellenmiş Dosya Yapisi
+
+```
+bioinformatics-data/
+├── phase1_preliminary/          (Faz 1 arsiv)
+├── step_01_data_prep/           (Dataset A/B, log ters donusum)
+├── step_02_baseline/             (Baseline sonuclar)
+├── step_03_kdm_ba/              (KDM-BA hesaplama sonuclar)
+├── step_04_ba_impact/           (SHAP, feature impact)
+├── step_07_final_model/         (Hiperparametre tuning, final rapor)
+├── step_08_xgboost_fix/         (OHE, threshold, calibration)
+├── step_09_advanced/             (PR-AUC, Optuna, Stacking)
+├── step_09_advanced/step09_results.csv
+├── step_09_advanced/step09_report.txt
+├── step_09_advanced/step09_kapsamli_rapor.md
+├── step_10_paper_replication/    (Makale replikasyonu)
+├── step_10_paper_replication/step10_results.csv
+├── step_10_paper_replication/step10_report.txt
+├── scripts/
+│   ├── step_09_advanced_pipeline.py
+│   ├── step_09_final_push.py
+│   └── step_10_paper_replication.py
+├── Raw Data .xlsx
+├── faz2_final_raporu.md
+└── makale_karsilastirma_raporu.md
+```
+
+*Rapor Tarihi: 2026-04-14 (Step 08-10 güncellemesi)*
+*Makale: PLOS ONE 20(12): e0335250 (Aralık 2025)*
+\end{verbatim}
+
+\newpage
+\section{Appendix C: Full makale\_karsilastirma\_raporu.md Snapshot}
+
+\begin{verbatim}
+# Makale (Fu et al., 2025 - PLOS ONE) vs Proje: Detaylı Karşılaştırma
+
+**Makale**: Fu F, Dong L, Lian J, et al. "Biological age threshold is associated with symptomatic knee osteoarthritis risk in chinese adults: Insights from machine learning analysis of a national cohort." *PLOS One*. 2025;20(12):e0335250.
+
+**DOI**: https://doi.org/10.1371/journal.pone.0335250
+
+---
+
+## 1. Veri Kaynağı & Örneklem
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| Kaynak | CHARLS 2011+2015 | CHARLS (aynı) |
+| Toplam kayıt | 38,800 | 38,800 |
+| Analiz örneklemi | **9,505** (listwise deletion + yaş≥45) | **18,046** (eksik verileri -999 ile kodlama) |
+| Sınıf oranı | 1,000 KOA(+) / 8,505 KOA(-) = **10.5%** pozitif | 5,865(+) / 12,181(-) = **32.5%** pozitif |
+
+**Kritik fark**: Makale katı dışlama kriterleri uygulayarak 9,505'e inmiş; biz ise tüm veriyi koruyarak 18,046'de kaldık. Sınıf dengesi çok farklı (%10.5 vs %32.5).
+
+---
+
+## 2. Sonuç (Outcome) Tanımı
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| Tanım | **Symptomatic KOA**: Hekim tanılı osteoarthritis + eşzamanlı diz ağrısı | **Arthritis** (genel hekim tanılı artrit) |
+| Spesifilik | Çok spesifik (sadece KOA + diz ağrısı) | Daha geniş (her türlü artrit) |
+
+Bu fark, hedef değişkenimizin daha heterojen olması anlamına geliyor; bu da sınıflandırmayı zorlaştırır.
+
+---
+
+## 3. EN ÖNEMLİ FARK: Biyolojik Yaş (BA)
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| BA hesaplama | **KDM yöntemi ile 8 serum biyobelirteçinden hesaplandı** (kolesterol, trigliserid, HbA1c, üre nitrojen, kreatinin, sistolik KB, hs-CRP, trombosit) | Ham "Biological Age" değişkeni (CHARLS'den) |
+| BA önemi | **SHAP > 0.6** (ağırlıklı en önemli feature) | BioAge_60_Plus feature olarak test edildi ama çok güçlü değil |
+| Etki | Her 1 yıl BA artışı = %1.23 daha fazla KOA riski | Benzer etki bulunamadı |
+
+**Bu, performans farkının ana nedeni.** Makale, BA'yı kan biyobelirteçlerinden matematiksel olarak türetiyor; bu çok daha bilgilendirici bir predictor oluşturuyor. Bizim ham "Biological Age" değişkenimizin aynı hesaplama yöntemiyle elde edilip edilmediği kritik bir soru.
+
+### RCS (Restricted Cubic Spline) Analizi Bulguları
+
+Makale, BA ile KOA riski arasında **doğrusal olmayan** bir ilişki buldu:
+- BA ~66.7 yılın altında: risk nispeten sabit
+- BA ~66.7 yılın üzerinde: risk hızla artıyor (non-linearity p = 0.013)
+- En yüksek BA kartilinde (Q4): Q1'e göre %45.19 daha fazla KOA riski (OR = 1.4519)
+
+Bu bulgu, makalenin BA'yı neden bu kadar güçlü bir feature haline getirdiğini açıklıyor.
+
+---
+
+## 4. Eksik Veri İşleme
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| Strateji | BA ve KOA bilgisi eksik olanları dışladı + MICE (kovaryatlar için) | Eksik verileri -999 ile kodlama (Raw Data Direct) |
+| Veri kaybı | ~62% (38,800 → 9,505), sonra 1,000 vaka seçimi | %0 (18,046) |
+
+Makale, eksik veri sorununu iki aşamada çözüyor:
+1. BA hesaplaması için tam veri gerektirdiğinden, eksik olan 15,394 kişiyi dışlıyor
+2. Kalan kovaryatlar için %2'den az eksik veriyi MICE ile tamamlıyor
+
+---
+
+## 5. Feature Seçimi
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| Yöntem | LASSO regression → 11 feature | 7 yöntem denenmiş, ham 17 feature en iyi |
+| Seçilenler | BA, gender, education, residence, hypertension, dyslipidemia, CVD, smoking, drinking, BMI category, cancer | Ham 17 feature (domain FE dahil 33, selection dahil 5-15 arası) |
+| Sonuç | BA tek başına baskın feature | Feature engineering tutarlı şekilde zararlı |
+
+### Makalenin LASSO ile Seçtiği 11 Feature
+
+1. Biological Age (BA) — **EN ÖNEMLİ**
+2. Gender
+3. Education
+4. Residence
+5. Hypertension
+6. Dyslipidemia
+7. Cardiovascular Disease (CVD)
+8. Smoking
+9. Drinking
+10. BMI Category
+11. Cancer
+
+**Dikkat**: Diabetes dışlandı (LASSO ile katsayısı sıfır).
+
+---
+
+## 6. Model Performansları (HEAD-TO-HEAD)
+
+| Model | **Makale AUROC** | **Bizim ROC AUC** | Fark |
+|---|---|---|---|
+| XGBoost | **0.9078** | ~0.6985 (CatBoost yakın) | **+0.21** |
+| LightGBM | **0.8973** | 0.7055 | **+0.19** |
+| CatBoost | **0.8616** | 0.6985 | **+0.16** |
+| Random Forest | **0.7393** | 0.6671 | **+0.07** |
+| SVM | 0.7159 | - | - |
+| Decision Tree | 0.6965 | - | - |
+| **En İyimiz** | - | **0.7058** (Soft Voting) | - |
+| **En İyi 5-fold CV** | **0.9106** | 0.7058 | - |
+
+---
+
+## 7. Performans Farkının Ana Nedenleri
+
+### Neden 1: Biyolojik Yaş Hesaplaması (EN BÜYÜK FARK)
+
+Makale BA'yı 8 kan biyobelirtečinden **Klemera-Doubal Method (KDM)** ile hesaplıyor. Bu, yaşla ilişkili hastalık riskini tek bir güçlü feature'da yoğunlaştırıyor. SHAP analizi BA'yı açık ara en önemli feature olarak gösteriyor (>0.6).
+
+Bizim ham "Biological Age" değişkenimiz muhtemelen aynı bilgiyi içermiyor. Domain-specific feature engineering'imiz (BioAge_60_Plus, BMI_x_BioAge) bu hesaplamayı yapmadığı için etkisiz kaldı.
+
+### Neden 2: Sonuç Tanımı Farkı
+
+Makale "symptomatic KOA" (diz ağrısı + hekim tanısı) kullanıyor; bizim "Arthritis" değişkenimiz daha genel ve heterojen. Daha spesifik bir outcome tanımı, modelin ayrıştırma gücünü artırır.
+
+### Neden 3: Örneklem Seçimi
+
+Makale eksik verisi olanları dışlayarak daha temiz ama daha küçük bir veri setiyle çalışıyor (9,505). Biz 18,046'de kalarak daha fazla veri koruyoruz ama daha gürültülü veriyle çalışıyoruz.
+
+### Neden 4: Sınıf Dengesi
+
+- Makale: %10.5 pozitif (aşırı dengesiz)
+- Bizim: %32.5 pozitif (moderat dengesiz)
+
+Farklı sınıf dengesi AUROC'u etkiler. Makalenin %10.5'lik pozitif oranı, modelin negatif sınıfı öğrenmesini kolaylaştırır ama pozitif sınıf recall'ını zorlaştırır.
+
+### Neden 5: Model Parametreleri ve Validasyon
+
+| | **Makale** | **Projemiz** |
+|---|---|---|
+| Split | 70/30 | 80/20 |
+| Validasyon | 5-fold CV | 5-fold CV × 3 seed |
+| Feature scaling | Z-score standardizasyonu | Farklı stratejiler |
+| Encoding | One-hot (kategorik) | Label encoding |
+| Eksik veri (kovaryatlar) | MICE | -999 kodlama |
+| Düzenlileştirme | L1/L2 + early stopping | RandomSearchCV |
+
+---
+
+## 8. Makalenin Diğer Önemli Bulguları
+
+### Lojistik Regresyon Bulguları
+
+- **Sürekli BA**: Her 1 yıl artış için OR = 1.0123 (p = 0.0010)
+- **Kartil karşılaştırması**:
+  - Q3 vs Q1: OR = 1.4655 (p = 0.0002)
+  - Q4 vs Q1: OR = 1.4519 (p = 0.0001)
+- Tüm modellerde anlamlı trend (p < 0.001)
+
+### Alt Grup Analizleri
+
+- BA-KOA ilişkisi tüm alt gruplarda tutarlı
+- Kadınlarda, kırsal bölgede yaşayanlarda, CVD'li olanlarda biraz daha güçlü
+- Hiçbir interaksiyon istatistiksel olarak anlamlı değil (p > 0.05)
+
+### SHAP Analizi (Feature Önem Sırası)
+
+1. **Biological Age** (SHAP > 0.6) — baskın
+2. Residence (kırsal = yüksek risk)
+3. Gender (kadın = yüksek risk)
+4. Education
+5. Marital status
+6. CVD
+7. BMI category
+8. Hypertension
+
+---
+
+## 9. Öneriler
+
+### Kısa Vadeli (Hemen Uygulanabilir)
+
+1. **KDM-BA hesapla**: CHARLS'de 8 serum biyobelirteci varsa (kolesterol, trigliserid, HbA1c, üre nitrojen, kreatinin, sistolik kan basıncı, hs-CRP, trombosit sayısı), KDM yöntemiyle BA'yı türet. Bu makalenin SHAP > 0.6 veren dominant feature'ıdır.
+
+2. **Sonuç tanımını daralt**: "Arthritis" yerine "symptomatic KOA" (diz ağrısı + hekim tanısı) kullan. Daha spesifik outcome = daha yüksek discriminability.
+
+3. **MICE ile eksik veri tamamlama**: Eksik kovaryatlar için MICE uygula, -999 yerine.
+
+### Orta Vadeli
+
+4. **Listwise deletion ile küçük veri seti oluştur**: Makalenin yaklaşımını tekrarla (9,505 örneklem) ve sonuçları karşılaştır.
+
+5. **Outcome tanımını ikiye ayır**: 
+   - "Symptomatic KOA" (diz ağrısı + hekim tanısı) → makalenin tanımına yakın
+   - "General Arthritis" → mevcut yaklaşımımız
+
+6. **LASSO feature selection**: Makalenin yaptığı gibi sadece LASSO ile feature seç, sonra XGBoost ile modelle.
+
+### Uzun Vadeli
+
+7. **Makalenin tam metodolojisini tekrarla**: Aynı dışlama kriterleri, aynı feature'lar, aynı model parametreleri ile çalış ve sonuçları birebir karşılaştır.
+
+8. **RCS analizi**: BA ile KOA riski arasındaki doğrusal olmayan ilişkiyi test et (threshold efekti).
+
+---
+
+## 10. Özet
+
+| Metrik | **Makale** | **Projemiz** | Fark | Ana Neden |
+|---|---|---|---|---|
+| En İyi AUROC | 0.9078 | 0.7058 | +0.20 | KDM-BA hesaplaması + outcome tanımı |
+| En İyi Model | XGBoost | Soft Voting (RF+XGB+LGBM) | - | Model seçimi benzer |
+| Veri Büyüklüğü | 9,505 | 18,046 | -9,505 | Dışlama kriterleri |
+| Feature Sayısı | 11 (LASSO) | 17 (ham) | -6 | Feature selection yaklaşımı |
+| Sınıf Oranı | 10.5% pozitif | 32.5% pozitif | -22% | Outcome tanımı |
+| BA Hesaplama | KDM (8 biyobelirteç) | Ham değişken | - | **Kritik fark** |
+
+**Temel Çıkarım**: "Feature engineering zararlı" bulgumuz, aslında **doğru feature engineering yapmadığımız** için geçerli. KDM-BA gibi domain-specific hesaplama, generic transformation'lardan (kare, log, etkileşim) çok daha güçlü. Makalenin yaklaşımını taklit ederek AUROC'umuzu ~0.90'a yaklaştırabiliriz.
+
+---
+
+## 11. Faz 2 Güncelleme (2026-04-14)
+
+### Sheet1 Keşfi ve Kritik Değişiklik
+
+**Sheet1** (28 kolon, 15,545 satır) daha önce hiç kullanılmamış bir veri seti olarak keşfedildi. Sheet ile karşılaştırma:
+
+| | Sheet (Faz 1) | Sheet1 (Faz 2) |
+|---|---|---|
+| Satır | 38,800 | 15,545 |
+| Kolon | 18 | 28 |
+| Hedef | Arthritis (%32.5) | KOA (%10.6) |
+| Biyobelirteç | YOK | 8 adet (log-transformed) |
+| Biological Age | Ham değişken | Mevcut |
+
+### KOA Hedef Değişkeni
+
+- **KOA = Arthritis=yes AND position_knees=yes** (makalenin "Symptomatic KOA" tanımına eşit)
+- %10.6 pozitif oran makalenin %10.5'ine çok yakın
+- position_knees ve Arthritis leakage olarak çıkarıldı
+
+### Faz 2 Sonuçları
+
+| Konfigürasyon | AUROC | F1 | Not |
+|---|---|---|---|
+| **RF raw17 (Dataset A)** | **0.8937** | 0.7578 | Faz 1'den +0.19 artış! |
+| **RF raw17 (Dataset B)** | **0.8939** | 0.7440 | Makalenin 0.9078'ine çok yakın |
+| XGB raw17 (Dataset A) | 0.8048 | 0.3139 | |
+| XGB raw17 (Dataset B) | 0.8275 | 0.4355 | |
+| CatBoost raw17 | 0.71 | 0.06 | |
+| LR raw17 | 0.66 | 0.01 | |
+| Faz 1 en iyi (Arthritis) | 0.7058 | 0.45 | Karşılaştırma |
+
+### KDM-BA Hesaplama Sonuçları (Beklenmedik)
+
+KDM-BA hesaplaması yapıldı ama beklenen etkiyi göstermedi:
+
+| Metrik | Biological Age | KDM-BA (log) | KDM-BA (orig) |
+|---|---|---|---|
+| KOA korelasyonu | 0.0383 | 0.0182 | 0.0208 |
+| AUROC (univariate) | 0.5356 | 0.5158 | 0.5187 |
+| OR (per 1 year) | 1.0115 | 1.0050 | 1.0057 |
+
+**KDM-BA, Biological Age'den DAHA ZAYIF bir KOA predictor!** Bunun olası sebepleri:
+1. Sheet1'deki biyobelirteçler yaşla zayıf korelasyona sahip (en güçlü sbp.mean r=0.42)
+2. Sheet1'deki Biological Age zaten güçlü bir feature (%37 importance RF'de)
+3. Biyobelirteçler log-transformed olarak saklanmış, KDM için orijinal ölçek gerekli olabilir
+
+### Güncelleştirilmiş Özet
+
+| Metrik | **Makale** | **Faz 1** | **Faz 2** | Fark (Faz 2 vs Makale) |
+|---|---|---|---|---|
+| En İyi AUROC | 0.9078 | 0.7058 | **0.8939** | **-0.014** |
+| En İyi Model | XGBoost | Soft Voting | RF | |
+| Feature Sayısı | 11 | 17 | 17 | |
+| Sınıf Oranı | 10.5% | 32.5% | 13.3% | |
+| BA Hesaplama | KDM | Ham | Ham (KDM zayıf) | |
+
+**Temel Çıkarım (Güncelleme)**: KOA hedef değişkeni değişimi tek başına AUROC'yu 0.71'den 0.89'a taşıdı. KDM-BA'nın beklenen dominant etkiyi göstermemesi, Sheet1'deki Biological Age'in zaten güçlü bir feature olmasından kaynaklanıyor olabilir. RF'in yüksek performansı daha detaylı SHAP analizi ile doğrulanmalı.
+
+---
+
+*Rapor Tarihi: 2026-04-14 (Faz 2 güncellemesi)*
+*Makale: PLOS ONE 20(12): e0335250 (Aralık 2025)*
+\end{verbatim}
+
+\end{document}
