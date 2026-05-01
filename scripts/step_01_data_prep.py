@@ -14,9 +14,49 @@ import pandas as pd
 import numpy as np
 import os
 from datetime import datetime
+from sklearn.model_selection import train_test_split
 
-BASE_DIR = r'C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data'
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 STEP_DIR = os.path.join(BASE_DIR, 'step_01_data_prep')
+UNSEEN_TEST_SIZE = 0.20
+SPLIT_RANDOM_STATE = 42
+
+
+def create_early_unseen_split(df_input, dataset_name, target_col='KOA',
+                              test_size=UNSEEN_TEST_SIZE, random_state=SPLIT_RANDOM_STATE):
+    train_df, unseen_df = train_test_split(
+        df_input,
+        test_size=test_size,
+        random_state=random_state,
+        stratify=df_input[target_col],
+    )
+
+    train_df = train_df.reset_index(drop=True)
+    unseen_df = unseen_df.reset_index(drop=True)
+
+    train_path = os.path.join(STEP_DIR, f'{dataset_name}_internal_train.csv')
+    unseen_path = os.path.join(STEP_DIR, f'{dataset_name}_unseen_test.csv')
+
+    train_df.to_csv(train_path, index=False)
+    unseen_df.to_csv(unseen_path, index=False)
+
+    meta = {
+        'dataset': dataset_name,
+        'split_type': 'early_stratified_holdout',
+        'test_size': test_size,
+        'random_state': random_state,
+        'target': target_col,
+        'n_total': len(df_input),
+        'n_internal_train': len(train_df),
+        'n_unseen_test': len(unseen_df),
+        'train_prevalence': train_df[target_col].mean(),
+        'unseen_prevalence': unseen_df[target_col].mean(),
+        'prevalence_abs_diff': abs(train_df[target_col].mean() - unseen_df[target_col].mean()),
+        'train_file': train_path,
+        'unseen_file': unseen_path,
+    }
+
+    return train_df, unseen_df, meta
 
 def load_sheet1():
     print("=" * 80)
@@ -235,12 +275,34 @@ def create_datasets(df):
     for c in feature_cols:
         print(f"  {c}: {dataset_a[c].dtype}")
     
-    # Save datasets
+    # Save full datasets
     dataset_a.to_csv(os.path.join(STEP_DIR, 'dataset_A_all.csv'), index=False)
     dataset_b.to_csv(os.path.join(STEP_DIR, 'dataset_B_ba55.csv'), index=False)
-    print(f"\nDatasets saved to {STEP_DIR}")
-    
-    return dataset_a, dataset_b, feature_cols
+
+    # Early split for unseen-test protocol (internal external-style validation)
+    print("\n--- Early Unseen Split (80/20 stratified) ---")
+    dataset_a_train, dataset_a_unseen, meta_a = create_early_unseen_split(
+        dataset_a,
+        dataset_name='dataset_A',
+        target_col='KOA',
+    )
+    dataset_b_train, dataset_b_unseen, meta_b = create_early_unseen_split(
+        dataset_b,
+        dataset_name='dataset_B',
+        target_col='KOA',
+    )
+
+    split_meta_df = pd.DataFrame([meta_a, meta_b])
+    split_meta_path = os.path.join(STEP_DIR, 'early_split_metadata.csv')
+    split_meta_df.to_csv(split_meta_path, index=False)
+
+    print(f"  Dataset A internal/unseen: {len(dataset_a_train)} / {len(dataset_a_unseen)}")
+    print(f"    KOA prevalence internal={dataset_a_train['KOA'].mean()*100:.2f}% | unseen={dataset_a_unseen['KOA'].mean()*100:.2f}%")
+    print(f"  Dataset B internal/unseen: {len(dataset_b_train)} / {len(dataset_b_unseen)}")
+    print(f"    KOA prevalence internal={dataset_b_train['KOA'].mean()*100:.2f}% | unseen={dataset_b_unseen['KOA'].mean()*100:.2f}%")
+    print(f"\nDatasets and split metadata saved to {STEP_DIR}")
+
+    return dataset_a, dataset_b, feature_cols, split_meta_df
 
 def data_quality_report(df, dataset_a, dataset_b):
     print("=" * 80)
@@ -285,7 +347,7 @@ def data_quality_report(df, dataset_a, dataset_b):
         ratio = koa_neg / koa_pos
         print(f"  {name}: KOA+={koa_pos} ({koa_pos/len(ds)*100:.1f}%), KOA-={koa_neg} ({koa_neg/len(ds)*100:.1f}%), ratio={ratio:.1f}:1")
 
-def generate_report(dataset_a, dataset_b, feature_cols):
+def generate_report(dataset_a, dataset_b, feature_cols, split_meta_df):
     report = []
     report.append("=" * 80)
     report.append("STEP 01: SHEET1 DATA PREPARATION - REPORT")
@@ -343,8 +405,22 @@ def generate_report(dataset_a, dataset_b, feature_cols):
     report.append("  Reason: KOA is directly derived from these columns")
     report.append("  position_knees=NaN rows also removed (as KOA cannot be verified)")
     report.append("")
+
+    report.append("7. EARLY UNSEEN SPLIT PROTOCOL")
+    report.append("-" * 40)
+    report.append("  Split type: stratified early holdout")
+    report.append(f"  Ratio: {(1-UNSEEN_TEST_SIZE)*100:.0f}/{UNSEEN_TEST_SIZE*100:.0f} (internal train/unseen test)")
+    report.append(f"  Random state: {SPLIT_RANDOM_STATE}")
+    for _, row in split_meta_df.iterrows():
+        report.append(
+            f"  {row['dataset']}: n={int(row['n_total'])} -> "
+            f"internal={int(row['n_internal_train'])}, unseen={int(row['n_unseen_test'])}, "
+            f"KOA prev internal={row['train_prevalence']*100:.2f}%, unseen={row['unseen_prevalence']*100:.2f}%"
+        )
+    report.append("  Files: dataset_*_internal_train.csv and dataset_*_unseen_test.csv")
+    report.append("")
     
-    report.append("7. NEXT STEPS")
+    report.append("8. NEXT STEPS")
     report.append("-" * 40)
     report.append("  Step 02: Baseline models on Dataset A and B")
     report.append("  Step 03: KDM-BA calculation from biomarkers")
@@ -363,9 +439,9 @@ def main():
     df_transformed = reverse_log_transform(df)
     encodings = decode_encodings(df)
     verify_koa_definition(df)
-    dataset_a, dataset_b, feature_cols = create_datasets(df_transformed)
+    dataset_a, dataset_b, feature_cols, split_meta_df = create_datasets(df_transformed)
     data_quality_report(df_transformed, dataset_a, dataset_b)
-    generate_report(dataset_a, dataset_b, feature_cols)
+    generate_report(dataset_a, dataset_b, feature_cols, split_meta_df)
     
     print("\n" + "=" * 80)
     print("STEP 01 COMPLETED SUCCESSFULLY")
@@ -373,6 +449,9 @@ def main():
     print(f"Files saved in: {STEP_DIR}")
     print(f"  dataset_A_all.csv  ({len(dataset_a)} rows)")
     print(f"  dataset_B_ba55.csv  ({len(dataset_b)} rows)")
+    print(f"  dataset_A_internal_train.csv / dataset_A_unseen_test.csv")
+    print(f"  dataset_B_internal_train.csv / dataset_B_unseen_test.csv")
+    print(f"  early_split_metadata.csv")
 
 if __name__ == '__main__':
     main()

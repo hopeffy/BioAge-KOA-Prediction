@@ -1,7 +1,7 @@
 ================================================================================
 STEP 01: SHEET1 DATA PREPARATION - REPORT
 ================================================================================
-Date: 2026-04-14 17:42:28
+Date: 2026-04-21 02:27:07
 
 1. DATA SOURCE
 ----------------------------------------
@@ -48,7 +48,16 @@ Date: 2026-04-14 17:42:28
   Reason: KOA is directly derived from these columns
   position_knees=NaN rows also removed (as KOA cannot be verified)
 
-7. NEXT STEPS
+7. EARLY UNSEEN SPLIT PROTOCOL
+----------------------------------------
+  Split type: stratified early holdout
+  Ratio: 80/20 (internal train/unseen test)
+  Random state: 42
+  dataset_A: n=12329 -> internal=9863, unseen=2466, KOA prev internal=13.32%, unseen=13.30%
+  dataset_B: n=7635 -> internal=6108, unseen=1527, KOA prev internal=14.21%, unseen=14.21%
+  Files: dataset_*_internal_train.csv and dataset_*_unseen_test.csv
+
+8. NEXT STEPS
 ----------------------------------------
   Step 02: Baseline models on Dataset A and B
   Step 03: KDM-BA calculation from biomarkers

@@ -1,31 +1,36 @@
 ================================================================================
 STEP 02: BASELINE MODEL REPORT
 ================================================================================
-Date: 2026-04-14 17:55:34
+Date: 2026-04-24 10:14:57
+
+Validation protocol:
+  - Internal: 5-fold CV x 3 seeds on internal partition
+  - Unseen: early 80/20 holdout (Step 01) when available, deterministic fallback otherwise
+  - Missing data: train-fitted SimpleImputer (median/mode)
 
 Datasets:
   Dataset A: 12329 rows, KOA rate=13.3%
   Dataset B: 7635 rows, KOA rate=14.2%
 
 Top 10 configurations:
-  Dataset_B_7635 | raw17_BA | RandomForest | AUC=0.8939 +/- 0.0181 | F1=0.7440
-  Dataset_B_7635 | raw17 | RandomForest | AUC=0.8939 +/- 0.0181 | F1=0.7440
-  Dataset_A_12329 | raw17 | RandomForest | AUC=0.8937 +/- 0.0083 | F1=0.7578
-  Dataset_A_12329 | raw17_BA | RandomForest | AUC=0.8937 +/- 0.0083 | F1=0.7578
-  Dataset_B_7635 | raw17 | XGBoost | AUC=0.8275 +/- 0.0155 | F1=0.4355
-  Dataset_B_7635 | raw17_BA | XGBoost | AUC=0.8275 +/- 0.0155 | F1=0.4355
-  Dataset_A_12329 | raw17_BA | XGBoost | AUC=0.8048 +/- 0.0184 | F1=0.3139
-  Dataset_A_12329 | raw17 | XGBoost | AUC=0.8048 +/- 0.0184 | F1=0.3139
-  Dataset_A_12329 | raw17_biomarkers_orig_BA | RandomForest | AUC=0.7433 +/- 0.0071 | F1=0.0342
-  Dataset_A_12329 | raw17_biomarkers_log_BA | RandomForest | AUC=0.7431 +/- 0.0103 | F1=0.0322
+  Dataset_B_7635 | raw17_BA | RandomForest | AUC_internal=0.8560 +/- 0.0232 | F1_internal=0.6488 | AUC_unseen=0.9045 | F1_unseen=0.7634
+  Dataset_B_7635 | raw17 | RandomForest | AUC_internal=0.8560 +/- 0.0232 | F1_internal=0.6488 | AUC_unseen=0.9045 | F1_unseen=0.7634
+  Dataset_A_12329 | raw17 | RandomForest | AUC_internal=0.8470 +/- 0.0191 | F1_internal=0.6524 | AUC_unseen=0.9075 | F1_unseen=0.8000
+  Dataset_A_12329 | raw17_BA | RandomForest | AUC_internal=0.8470 +/- 0.0191 | F1_internal=0.6524 | AUC_unseen=0.9075 | F1_unseen=0.8000
+  Dataset_B_7635 | raw17 | XGBoost | AUC_internal=0.7956 +/- 0.0302 | F1_internal=0.4204 | AUC_unseen=0.8365 | F1_unseen=0.4271
+  Dataset_B_7635 | raw17_BA | XGBoost | AUC_internal=0.7956 +/- 0.0302 | F1_internal=0.4204 | AUC_unseen=0.8365 | F1_unseen=0.4271
+  Dataset_B_7635 | raw17_BA | LightGBM | AUC_internal=0.7793 +/- 0.0291 | F1_internal=0.2249 | AUC_unseen=0.8119 | F1_unseen=0.2692
+  Dataset_B_7635 | raw17 | LightGBM | AUC_internal=0.7793 +/- 0.0291 | F1_internal=0.2249 | AUC_unseen=0.8119 | F1_unseen=0.2692
+  Dataset_A_12329 | raw17_BA | XGBoost | AUC_internal=0.7784 +/- 0.0171 | F1_internal=0.3055 | AUC_unseen=0.8090 | F1_unseen=0.3302
+  Dataset_A_12329 | raw17 | XGBoost | AUC_internal=0.7784 +/- 0.0171 | F1_internal=0.3055 | AUC_unseen=0.8090 | F1_unseen=0.3302
 
 Feature set comparison (avg across datasets & models):
-  raw17: AUC=0.7707, F1=0.3011, n_feat=17
-  raw17_BA: AUC=0.7707, F1=0.3011, n_feat=17
-  raw17_biomarkers_orig_BA: AUC=0.6875, F1=0.0579, n_feat=26
-  raw17_biomarkers_log_BA: AUC=0.6862, F1=0.0571, n_feat=26
-  raw17_biomarkers_log: AUC=0.6810, F1=0.0531, n_feat=25
-  raw17_biomarkers_orig: AUC=0.6806, F1=0.0524, n_feat=25
+  raw17: AUC=0.7531, F1=0.2524, n_feat=17
+  raw17_BA: AUC=0.7531, F1=0.2524, n_feat=17
+  raw17_biomarkers_orig_BA: AUC=0.6757, F1=0.0483, n_feat=26
+  raw17_biomarkers_log_BA: AUC=0.6753, F1=0.0496, n_feat=26
+  raw17_biomarkers_orig: AUC=0.6715, F1=0.0469, n_feat=25
+  raw17_biomarkers_log: AUC=0.6711, F1=0.0490, n_feat=25
 
 Phase 1 reference: AUROC = 0.7058 (Arthritis target, Sheet data)
 Best Phase 2 baseline: see above

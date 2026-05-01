@@ -1,0 +1,67 @@
+======================================================================
+STEP EXT-VAL-HRS REPORT
+======================================================================
+Date:         2026-04-24 12:04:31
+HRS wave:     13
+Feature set:  raw16 (raw17 minus Biological Age)
+CHARLS train: c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\BioAge-KOA-Prediction\step_01_data_prep\dataset_A_internal_train.csv
+
+COHORT
+----------------------------------------
+  n                  = 20,605
+  KOA prevalence     = 33.9%
+
+PRIMARY METRICS
+----------------------------------------
+  ROC-AUC            = 0.6041
+  PR-AUC             = 0.3986
+  Brier score        = 0.2583
+  ECE                = 0.1939
+  MCE                = 0.5913
+  Cal. slope         = 0.184  [OUTSIDE RANGE -> logistic recalibration-in-the-large recommended]
+  Cal. intercept     = -0.266
+
+DCA (10%-30% threshold band)
+----------------------------------------
+  Mean gain vs treat-all = -0.0724
+  Avoided per 100 pts    = -33.8
+  Relative reduction     = -51.0%
+
+COMPARISON WITH CHARLS INTERNAL RESULTS
+----------------------------------------
+  Setting              ROC-AUC    PR-AUC    Brier    ECE
+  Internal OOF         0.847      0.688     0.070    0.045
+  Unseen holdout       0.907      0.791     0.053    0.056
+  HRS (raw16)          0.604      0.399     0.258    0.194
+
+IMPORTANT LIMITATIONS
+----------------------------------------
+  1. Biological Age excluded (not in RAND fat file).
+     For full raw17 analysis: link HRS Venous Blood Study (VBS)
+     biomarker file and compute KDM-BA via step_03_kdm_ba.py.
+  2. KOA proxy (arthritis-only) less specific than CHARLS
+     (arthritis + knee-localised pain). Outcome noise expected.
+  3. Residence set to urban=1 for all participants.
+     True urban/rural requires HRS geographic restricted file.
+  4. Dyslipidemia proxy (cholesterol medication) may differ from
+     CHARLS self-reported physician diagnosis.
+  5. HRS is predominantly white US population; CHARLS is Chinese.
+     Cross-cultural performance attenuation is expected.
+
+NEXT STEPS
+----------------------------------------
+  A. Obtain HRS VBS biomarker file -> compute KDM-BA -> run raw17.
+  B. Apply logistic recalibration-in-the-large if slope outside [0.80, 1.20].
+  C. Proceed to ELSA for primary external validation (full raw17).
+  D. Fill TBD placeholders in draft_external_validation.tex.
+
+OUTPUT FILES
+----------------------------------------
+  c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data\BioAge-KOA-Prediction\step_ext_val_hrs/
+    hrs_analysis_cohort.csv
+    ext_val_hrs_metrics.csv
+    ext_val_hrs_calibration_table.csv
+    ext_val_hrs_dca.csv
+    reliability_diagram_hrs.png
+    dca_curve_hrs.png
+    ext_val_hrs_report.txt  (this file)

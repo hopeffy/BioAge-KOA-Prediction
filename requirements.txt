@@ -1,11 +1,28 @@
+# BioAge-KOA-Prediction dependencies
+# Install with: pip install -r requirements.txt
+# Python >= 3.9 recommended
+
+# Core data science
+numpy>=1.24.0
 pandas>=1.5.0
-numpy>=1.23.0
-matplotlib>=3.5.0
-seaborn>=0.12.0
+scipy>=1.10.0
+
+# Machine learning
 scikit-learn>=1.2.0
-openpyxl>=3.0.0
 xgboost>=1.7.0
 lightgbm>=3.3.0
 catboost>=1.1.0
-optuna>=3.0.0
-shap>=0.51.0
+
+# SHAP for interpretability
+shap>=0.41.0
+
+# Visualization
+matplotlib>=3.6.0
+seaborn>=0.12.0
+
+# Excel file reading (for Raw Data .xlsx)
+openpyxl>=3.0.0
+
+# STATA file reading (for RAND HRS .dta files — optional but recommended)
+# Significantly faster column-selection on large .dta files vs pandas.read_stata
+pyreadstat>=1.2.0

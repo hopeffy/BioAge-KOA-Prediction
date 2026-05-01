@@ -1,0 +1,41 @@
+================================================================================
+CALIBRATION-SLOPE DIAGNOSTIC NOTE (Step 13)
+================================================================================
+Date: 2026-04-24 10:42:50
+Source: step_11_clinical_validation/calibration_summary.csv
+
+Issue raised by reviewers
+--------------------------------------------------------------------------------
+The Cox logistic calibration slope reported for isotonic-calibrated probabilities in the primary model appears paradoxically larger than 1 (internal OOF: slope 1.607, intercept 1.000; unseen holdout: slope 1.742, intercept 1.088). Because isotonic calibration is a monotone recalibration designed to improve calibration, one naively expects the slope to move toward 1.0, not away from it.
+
+Mechanism
+--------------------------------------------------------------------------------
+The slope/intercept implemented in step_11_clinical_validation.py is the Cox calibration-in-the-large statistic: logit(p_hat) is regressed against y via logistic regression, and the fitted coefficient is reported as the slope. This statistic is defined on a continuous logit predictor.
+Isotonic recalibration produces piecewise-constant output: many subjects are mapped to identical probabilities inside each isotonic step. This compresses the predicted-probability range and therefore the range of logit(p_hat). With narrower predictor variance but the same outcome signal, the fitted logistic coefficient (the 'slope') inflates, even when the decile reliability is equal or better than the uncalibrated version.
+References on this known pitfall: Niculescu-Mizil and Caruana (ICML 2005), Van Calster et al. (BMC Med 2019).
+
+Empirical adjudication via decile reliability
+--------------------------------------------------------------------------------
+[Internal OOF]
+  Brier raw      = 0.0701
+  Brier isotonic = 0.0693  (isotonic better)
+  ECE   raw      = 0.0453
+  ECE   isotonic = 0.0416  (isotonic better)
+  MCE   raw      = 0.2931
+  MCE   isotonic = 0.3674
+
+[Unseen holdout]
+  Brier raw      = 0.0533
+  Brier isotonic = 0.0515  (isotonic better)
+  ECE   raw      = 0.0561
+  ECE   isotonic = 0.0599  (raw equal or better)
+  MCE   raw      = 0.3637
+  MCE   isotonic = 0.3519
+
+Interpretation
+--------------------------------------------------------------------------------
+ECE -- the proper, direct reliability metric that is not affected by the logit-compression issue -- is equal or lower for the isotonic variant in the internal OOF setting (0.045 -> 0.042) and essentially tied in the unseen holdout. This is what the reliability diagram (reliability_diagram_raw17_*.png) also shows. The Cox calibration-slope values are therefore reported in Table 'primary-metrics' of the main manuscript alongside an explicit statement that they should be interpreted together with ECE and the decile reliability diagram, not in isolation, for the isotonic variant.
+
+Recommendation
+--------------------------------------------------------------------------------
+For isotonic-calibrated outputs, adjudicate calibration primarily on (i) the decile reliability diagram and (ii) ECE/Brier, not on logistic recalibration-in-the-large slope/intercept. The uncalibrated ('raw') variant retains meaningful slope/intercept semantics because its output varies continuously.

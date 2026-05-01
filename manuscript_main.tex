@@ -1,0 +1,316 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{array}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={Internal Validation Study for Symptomatic KOA Risk Prediction},
+  pdfauthor={BioAge-KOA-Prediction Team}
+}
+
+\title{Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data:\\
+\large Internal Validation with Early Unseen Holdout, Calibration, and Decision Analysis}
+\author{BioAge-KOA-Prediction Team}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Symptomatic knee osteoarthritis (KOA) is a major source of disability and health-care burden in aging populations. Existing machine-learning reports frequently emphasize discrimination while under-reporting calibration quality and decision relevance. We developed an internal-validation pipeline for symptomatic KOA prediction in a CHARLS-derived cohort ($n=12{,}329$, KOA prevalence $13.3\%$) with three design choices: (i) an early 80/20 stratified unseen holdout split, (ii) train-fitted missing-data imputation to avoid leakage, and (iii) a primary-model strategy centered on a single pre-specified model-feature combination (Random Forest trained on the 17 sociodemographic and clinical variables collectively labelled raw17). Reporting follows TRIPOD guidance for prediction-model studies and the PROBAST framework for internal risk of bias. Performance was evaluated with ROC-AUC, PR-AUC, Brier score, expected calibration error (ECE), the Cox calibration slope/intercept (with a stated caveat for piecewise-constant isotonic output), decile reliability diagnostics, and decision-curve analysis (DCA) reported in Vickers net-benefit units. In the primary model (raw17, uncalibrated probabilities), internal out-of-fold (OOF) performance was ROC-AUC $0.847$, PR-AUC $0.688$, Brier $0.070$, ECE $0.045$, slope $0.989$, intercept $-0.040$; unseen-holdout performance was ROC-AUC $0.907$, PR-AUC $0.791$, Brier $0.053$, ECE $0.056$, slope $1.216$, intercept $0.178$. Across the 10\%--30\% threshold band, the primary model produced strictly positive mean net benefit versus both treat-all and treat-none in internal and holdout settings; expressed in Vickers' net-reduction-per-100-patients formulation, this corresponds to approximately 56--57 fewer unnecessary interventions per 100 patients internally and 64--66 per 100 on the unseen holdout. Clinical-utility statements in this manuscript are explicitly limited to internal validation; external validation on an independent cohort remains the key next milestone before clinical deployment claims can be made.
+\end{abstract}
+
+\textbf{Keywords:} symptomatic KOA, machine learning, TRIPOD, calibration, decision curve analysis, SHAP, internal validation
+
+\section{Introduction}
+Knee osteoarthritis is one of the leading causes of years lived with disability worldwide, with age-standardised prevalence having risen steadily in recent decades\cite{Safiri2020}. In aging populations, symptomatic KOA -- defined as clinically diagnosed knee osteoarthritis co-occurring with knee pain -- imposes substantial mobility, quality-of-life, and health-care-utilization costs. Risk-prediction models may support earlier stratification, but publication-quality evidence requires more than high discrimination alone. Reporting should include calibration behaviour and threshold-level decision consequences, not only ROC-AUC, and should follow standards such as TRIPOD\cite{Collins2015} and PROBAST\cite{Wolff2019}.
+
+A recent CHARLS-based report\cite{Fu2025} presented strong discrimination for symptomatic KOA and highlighted biological age as a central predictor. However, translating a published result to a new analytical pipeline is sensitive to cohort filtering, missing-data strategy, categorical encoding, class-balance handling, and split design. This manuscript frames the project as a single internal-validation narrative with a pre-specified primary model, explicit internal-evidence boundaries, and transparent comparison against the reference study.
+
+\section{Methods}
+
+\subsection{Study Objective and Outcome}
+The prediction target was symptomatic KOA in a CHARLS-derived cohort. The outcome was operationalised from two CHARLS-derived fields as
+\[
+\text{KOA} = \mathbb{1}\bigl[\text{Arthritis} = \text{``yes''}\bigr]\ \wedge\ \mathbb{1}\bigl[\text{position\_knees} = \text{``yes''}\bigr],
+\]
+\noindent which matches the ``symptomatic KOA'' operationalisation used by Fu et al.\cite{Fu2025} (physician-reported arthritis with knee-localised joint pain). To prevent target leakage, both source fields (\texttt{Arthritis} and \texttt{position\_knees}) were removed from the predictor set; in addition, rows with \texttt{position\_knees} missing were dropped because the target itself could not be verified for those subjects. Verification on eligible rows confirmed a 100\% match between the derived binary target and the conjunction rule.
+
+\subsection{Study Cohort and Exclusion Cascade}
+The analysis was built on Sheet1 of the CHARLS extract (15{,}545 baseline rows, 28 columns). Applying the target-verification rule removed 3{,}216 rows with \texttt{position\_knees} missing, yielding the analytical cohort ``Dataset A'' with 12{,}329 rows and 13.32\% symptomatic-KOA prevalence. Dataset A was then partitioned once, before any model development, into an internal training partition (80\%, $n=9{,}863$, prevalence 13.32\%) and an unseen holdout partition (20\%, $n=2{,}466$, prevalence 13.30\%) using a stratified split with \texttt{random\_state=42}. A secondary filter (Biological Age $\geq 55$) produces ``Dataset B'' ($n=7{,}635$) for sensitivity analyses only. Table~\ref{tab:table1} summarises the characteristics of Dataset A and its two partitions.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Table 1. Cohort characteristics of the CHARLS-derived Dataset A and the early 80/20 partitions. Values are counts (\%) or mean $\pm$ SD. All counts refer to rows with \texttt{position\_knees} non-missing; no imputation was needed because the raw17 feature set and the outcome were complete for every included subject.}
+\label{tab:table1}
+\begin{tabular}{lccc}
+\toprule
+Characteristic & Full Dataset A & Internal train (80\%) & Unseen holdout (20\%) \\
+\midrule
+N & 12{,}329 & 9{,}863 & 2{,}466 \\
+Symptomatic KOA, n (\%) & 1{,}642 (13.32) & 1{,}314 (13.32) & 328 (13.30) \\
+Biological Age, mean $\pm$ SD & $58.70 \pm 9.79$ & $58.70 \pm 9.76$ & $58.70 \pm 9.90$ \\
+Age bucket $\geq 60$, n (\%) & 3{,}357 (27.2) & 2{,}676 (27.1) & 681 (27.6) \\
+Female, n (\%) & 6{,}443 (52.3) & 5{,}143 (52.1) & 1{,}300 (52.7) \\
+BMI, mean $\pm$ SD & $23.65 \pm 3.84$ & $23.63 \pm 3.83$ & $23.73 \pm 3.88$ \\
+BMI category underweight/normal, n (\%) & 719 (5.8) & 590 (6.0) & 129 (5.2) \\
+BMI category overweight, n (\%) & 10{,}122 (82.1) & 8{,}081 (81.9) & 2{,}041 (82.8) \\
+BMI category obese, n (\%) & 1{,}488 (12.1) & 1{,}192 (12.1) & 296 (12.0) \\
+Married, n (\%) & 10{,}429 (84.6) & 8{,}343 (84.6) & 2{,}086 (84.6) \\
+Education low/medium/high, \% & 28.1 / 61.9 / 10.0 & 27.9 / 62.0 / 10.1 & 28.8 / 61.4 / 9.7 \\
+Residence urban, n (\%) & 7{,}954 (64.5) & 6{,}388 (64.8) & 1{,}566 (63.5) \\
+Hypertension, n (\%) & 3{,}142 (25.5) & 2{,}503 (25.4) & 639 (25.9) \\
+Dyslipidemia, n (\%) & 1{,}108 (9.0) & 882 (8.9) & 226 (9.2) \\
+Diabetes, n (\%) & 726 (5.9) & 584 (5.9) & 142 (5.8) \\
+Cancer, n (\%) & 93 (0.8) & 75 (0.8) & 18 (0.7) \\
+CVD, n (\%) & 1{,}304 (10.6) & 1{,}016 (10.3) & 288 (11.7) \\
+Smoking ever, n (\%) & 4{,}896 (39.7) & 3{,}897 (39.5) & 999 (40.5) \\
+Drinking ever, n (\%) & 5{,}144 (41.7) & 4{,}156 (42.1) & 988 (40.1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature Set (raw17)}
+The pre-specified primary feature set, referred to throughout as \emph{raw17}, contains 17 variables grouped as follows (Table~\ref{tab:raw17}).
+
+\begin{table}[h!]
+\centering
+\small
+\caption{The 17 variables in the raw17 feature set used by the primary model. Encoding: Gender (1=male, 2=female); Age\_New (1=45--59, 2=$\geq 60$); Marital (1=married, 2=other); Education (1=low, 2=medium, 3=high); Residence (1=urban, 2=rural); BMI\_New (1=underweight/normal, 2=overweight, 3=obese); binary comorbidities 0/1.}
+\label{tab:raw17}
+\begin{tabular}{llp{6.2cm}}
+\toprule
+Variable & Type & CHARLS-derived meaning \\
+\midrule
+wave & integer & Survey wave identifier \\
+Time & integer & Survey year indicator \\
+Gender & binary & Self-reported sex \\
+Age\_New & ordinal (2 levels) & Age bucket (45--59, $\geq 60$) \\
+Marital & binary & Marital status (married vs other) \\
+Education & ordinal (3 levels) & Educational attainment \\
+Residence & binary & Urban vs rural \\
+Hypertension & binary & Self-reported physician-diagnosed \\
+Dyslipidemia & binary & Self-reported physician-diagnosed \\
+Diabetes & binary & Self-reported physician-diagnosed \\
+Cancer & binary & Self-reported physician-diagnosed \\
+CVD & binary & Self-reported physician-diagnosed cardiovascular disease \\
+Smoke & binary & Ever vs never smoker \\
+Drink & binary & Ever vs never drinker \\
+BMI & continuous & Measured body-mass index (kg/m\textsuperscript{2}) \\
+BMI\_New & ordinal (3 levels) & BMI category (underweight/normal, overweight, obese) \\
+Biological Age & continuous & CHARLS-supplied biological-age field \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Secondary feature branches (treated as sensitivity analyses) extend raw17 with either an adapted PhenoAge clock (\texttt{raw17\_plus\_pheno}) or a broader KDM/PhenoAge bundle (\texttt{raw17\_plus\_adapted\_aging}); details are retained in the engineering supplement.
+
+\subsection{Missing Data Handling}
+After the target-verification exclusion, the raw17 feature set and the outcome were complete for every row in Dataset A (0\% missingness). Nevertheless, as a pipeline safety net and to support sensitivity branches that incorporate additional biomarker features with non-zero missingness, missing values were handled with train-fitted simple imputation to avoid leakage: numeric features used median imputation and categorical features used most-frequent imputation. Imputers were fit on training data only and then applied to validation or unseen data. Standardisation (\texttt{StandardScaler}) was fit on training data only.
+
+\subsection{Early Unseen Holdout Strategy}
+To approximate external-style stress testing within one cohort, the early 80/20 stratified split described above was created before model development and persisted as CSV artefacts (\texttt{dataset\_A\_internal\_train.csv}, \texttt{dataset\_A\_unseen\_test.csv}). Internal model development and OOF estimation used only the internal partition; the unseen partition was reserved for a single-shot external-style evaluation.
+
+\subsection{Primary and Secondary Modeling Strategy}
+The pre-specified primary model was a Random Forest (scikit-learn \texttt{RandomForestClassifier}) used with a fixed, pre-declared configuration rather than with tuned hyperparameters: \texttt{n\_estimators=300} (chosen once before model development as a single fixed value; larger than the scikit-learn default of 100) and \texttt{random\_state=42}, with \texttt{n\_jobs=-1} for parallelism. All remaining hyperparameters were left at their scikit-learn defaults (\texttt{max\_depth=None}, \texttt{min\_samples\_leaf=1}, \texttt{max\_features=``sqrt''}, \texttt{criterion=``gini''}, \texttt{bootstrap=True}). No grid search, Bayesian search, or Optuna-based tuning was performed on this configuration; earlier exploratory grid-search and Optuna branches were retained only for auditability and were not used to generate primary-model claims. KDM-based and adapted aging-clock feature branches are retained as secondary sensitivity analyses. When secondary feature columns are unavailable in the persisted Step 01 split artefacts, the evaluation script applies a deterministic 80/20 stratified fallback split (same random seed) and flags the split source in outputs.
+
+\subsection{Class-Imbalance Handling}
+The analytical cohort has moderately imbalanced classes (symptomatic KOA prevalence 13.3\%). No resampling (SMOTE, random under-/over-sampling) and no \texttt{class\_weight} adjustment were applied to the primary Random Forest. Under imbalance, PR-AUC was pre-specified as the primary discrimination metric alongside ROC-AUC, following standard recommendations for imbalanced binary prediction.
+
+\subsection{Evaluation Framework}
+Internal validation used stratified 5-fold out-of-fold (OOF) estimation on the internal training partition. Performance was then re-evaluated on the unseen holdout partition. Reported metrics:
+\begin{itemize}
+\item discrimination: ROC-AUC, PR-AUC;
+\item classification quality: F1, accuracy, precision, recall (at the default 0.5 threshold and at the best-F1 threshold);
+\item calibration: Brier score, expected calibration error (ECE), maximum calibration error (MCE), Cox logistic calibration slope and intercept, and a decile reliability diagram;
+\item decision relevance: Vickers net benefit at thresholds 0.05--0.60 and threshold-band summaries for 0.10--0.30.
+\end{itemize}
+
+Probability calibration was assessed both for uncalibrated (``raw'') Random Forest outputs and for an isotonic-calibrated variant (\texttt{CalibratedClassifierCV} with \texttt{method=``isotonic''} and inner 3-fold cross-validation).
+
+\subsection{Interpretability}
+Model interpretation included SHAP global importance, SHAP interaction analysis, and local waterfall plots for representative cases, following the engineering supplement.
+
+\subsection{Differences vs.\ Reference Study (Fu et al., 2025)}
+Table~\ref{tab:paper-delta} summarises the key methodological differences between the reference study and the present pipeline; this is a methodological-transparency exercise, not an empirical result, and is therefore placed in Methods.
+
+\begin{table}[h!]
+\centering
+\caption{Methodological delta versus reference study.}
+\label{tab:paper-delta}
+\begin{tabular}{p{3.4cm}p{5.1cm}p{5.1cm}}
+\toprule
+Domain & Reference paper & Current pipeline \\
+\midrule
+Cohort framing & Symptomatic KOA in CHARLS-derived sample & Symptomatic KOA in CHARLS-derived sample; updated internal protocol with early holdout \\
+Missing data & Study-specific exclusions / imputation choices & Train-fitted \texttt{SimpleImputer} within each split (not needed for raw17 itself) \\
+Encoding & One-hot encoding emphasised in replication branch & Primary branch uses established raw17 coding; replication branch retained as sensitivity \\
+Split protocol & 70/30 emphasised in paper comparison & Early 80/20 unseen holdout + internal OOF validation \\
+Class-balance handling & Model-specific handling & No resampling (no SMOTE/undersampling) and no \texttt{class\_weight} adjustment \\
+Primary discrimination metric & ROC-AUC-centred & PR-AUC reported alongside ROC-AUC, reflecting the 13.3\% prevalence \\
+Primary model & XGBoost-centred & Random Forest + raw17 pre-specified as primary \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+
+\subsection{Primary Model Performance (Random Forest + raw17)}
+Table~\ref{tab:primary-metrics} summarises the matched internal OOF and unseen-holdout performance for the pre-specified primary model. Discrimination remained strong in both settings, and unseen-holdout ROC-AUC and PR-AUC were numerically higher than internal OOF estimates. Brier scores and ECE values were low; the Cox calibration slope and intercept indicate residual miscalibration to be interpreted in an internal-validation context.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Primary model metrics from the revised pipeline run. Slope/intercept are from Cox logistic recalibration on predicted-logit; see the reliability-diagnostics note for the isotonic caveat.}
+\label{tab:primary-metrics}
+\begin{tabular}{llccccccc}
+\toprule
+Set & Variant & ROC-AUC & PR-AUC & Brier & ECE & Slope & Intercept & F1 \\
+\midrule
+Internal OOF & Raw & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 & -0.040 & 0.649 \\
+Internal OOF & Isotonic & 0.839 & 0.676 & 0.069 & 0.042 & 1.607 & 1.000 & 0.653 \\
+Unseen holdout & Raw & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 & 0.178 & 0.801 \\
+Unseen holdout & Isotonic & 0.900 & 0.779 & 0.051 & 0.060 & 1.742 & 1.088 & 0.799 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Reliability Diagnostics and the Isotonic-Slope Anomaly}
+The Cox calibration-slope values for the isotonic-calibrated variants ($1.607$ internal, $1.742$ holdout, paired with intercepts of $1.000$ and $1.088$) appear paradoxical when read against the usual expectation that isotonic recalibration should move slopes toward 1.0. However, the slope/intercept reported by logistic-recalibration-in-the-large is defined on the continuous logit of predicted probabilities and is known to be ill-behaved when applied to piecewise-constant isotonic output, in which many subjects share identical probability values. Because isotonic compresses the predicted-probability range, the logit predictor has smaller effective variance, which inflates the fitted logistic coefficient (the slope) even when the decile reliability itself improves\cite{NiculescuMizil2005,VanCalster2019}. The correct adjudication is therefore a direct observed-vs-predicted decile table (Table~\ref{tab:reliability-oof}) combined with the reliability diagram.
+
+Consistent with this interpretation, ECE actually \emph{decreases} after isotonic calibration in the internal OOF setting ($0.045 \rightarrow 0.042$). The top-decile under-prediction seen in Table~\ref{tab:reliability-oof} is present in \emph{both} the raw and the isotonic variants (observed rate $0.743$ vs mean predicted $0.629$ for raw; observed rate $0.723$ vs mean predicted $0.551$ for isotonic) and is therefore not a calibration failure specific to isotonic recalibration. Under-prediction at the extremes is a well-documented property of tree-ensemble probability output with bounded terminal-node proportions\cite{NiculescuMizil2005}: no single tree can output a probability above the maximum positive rate in any leaf, and averaging across trees shrinks high-confidence predictions toward the mean. What isotonic does differently is to shift the \emph{mean predicted} probability inside the top decile further downward (from $0.629$ to $0.551$), which widens the gap numerically even though the observed event rate -- the quantity that matters clinically -- is essentially unchanged ($0.743 \to 0.723$). In the unseen-holdout setting the two variants perform essentially the same on Brier and ECE, with isotonic slightly better on Brier ($0.051$ vs $0.053$) and slightly worse on ECE ($0.060$ vs $0.056$).
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Decile reliability of the primary Random Forest model on the internal OOF set ($n=9{,}863$). Bin edges are derived from quantile discretisation of the predicted probabilities.}
+\label{tab:reliability-oof}
+\begin{tabular}{lrrrrr}
+\toprule
+Bin (raw) & n & Mean predicted & Observed rate & $|$obs $-$ pred$|$ \\
+\midrule
+(-0.001, 0.007] & 1{,}311 & 0.003 & 0.028 & 0.025 \\
+(0.007, 0.013] & 719 & 0.012 & 0.033 & 0.022 \\
+(0.013, 0.027] & 1{,}101 & 0.021 & 0.036 & 0.015 \\
+(0.027, 0.040] & 827 & 0.035 & 0.041 & 0.006 \\
+(0.040, 0.063] & 1{,}101 & 0.053 & 0.045 & 0.007 \\
+(0.063, 0.090] & 921 & 0.077 & 0.062 & 0.016 \\
+(0.090, 0.130] & 964 & 0.110 & 0.082 & 0.028 \\
+(0.130, 0.197] & 961 & 0.162 & 0.107 & 0.054 \\
+(0.197, 0.383] & 971 & 0.267 & 0.162 & 0.105 \\
+(0.383, 0.930] & 987 & 0.629 & 0.743 & 0.114 \\
+\midrule
+Bin (isotonic) & n & Mean predicted & Observed rate & $|$obs $-$ pred$|$ \\
+\midrule
+(0.019, 0.041] & 997 & 0.034 & 0.024 & 0.010 \\
+(0.041, 0.050] & 996 & 0.046 & 0.037 & 0.008 \\
+(0.050, 0.061] & 976 & 0.056 & 0.054 & 0.001 \\
+(0.061, 0.072] & 979 & 0.066 & 0.033 & 0.034 \\
+(0.072, 0.085] & 985 & 0.079 & 0.047 & 0.032 \\
+(0.085, 0.102] & 987 & 0.094 & 0.066 & 0.028 \\
+(0.102, 0.120] & 987 & 0.111 & 0.079 & 0.032 \\
+(0.120, 0.148] & 985 & 0.134 & 0.106 & 0.029 \\
+(0.148, 0.205] & 988 & 0.171 & 0.166 & 0.006 \\
+(0.205, 1.000] & 983 & 0.551 & 0.723 & 0.172 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Reliability diagrams for both the internal OOF and the unseen-holdout settings are provided in the diagnostic artefact \texttt{step\_13\_reliability\_diagnostics/} (files \texttt{reliability\_diagram\_raw17\_internal\_oof.png} and \texttt{reliability\_diagram\_raw17\_unseen\_holdout.png}), together with a plain-text diagnostic note explaining the slope behaviour.
+
+\subsection{Decision-Curve Analysis}
+Decision-curve analysis follows the net-benefit framework of Vickers and colleagues\cite{Vickers2006,Vickers2016}. The net benefit of a model at a decision threshold $t$ is
+\[
+\mathrm{NB}_{\text{model}}(t) = \frac{\mathrm{TP}}{n} - \frac{\mathrm{FP}}{n} \cdot \frac{t}{1-t},
+\]
+\noindent which is compared to a treat-all strategy ($\mathrm{NB}_{\text{all}}(t) = \pi - (1-\pi)\cdot\tfrac{t}{1-t}$, with $\pi$ the cohort prevalence) and a treat-none strategy ($\mathrm{NB}_{\text{none}}=0$). A clinically interpretable derived quantity is the net reduction in unnecessary interventions per 100 patients\cite{Vickers2016}:
+\[
+\mathrm{Avoided}/100 \;=\; 100 \cdot \bigl(\mathrm{NB}_{\text{model}}(t) - \mathrm{NB}_{\text{all}}(t)\bigr) \cdot \frac{1-t}{t}.
+\]
+
+Across the clinically relevant 10\%--30\% threshold band, the primary model produced strictly positive mean net benefit against both treat-all and treat-none in internal and holdout settings. Expressed in the derived net-reduction-per-100 formulation, the uncalibrated primary model yielded an estimated $56.0$ (internal) and $63.8$ (unseen) avoided unnecessary interventions per 100 patients versus treat-all; for isotonic probabilities the corresponding values were $56.5$ (internal) and $65.8$ (unseen), with relative reductions of $65.2\%$ (internal) and $75.9\%$ (unseen) against the treat-all baseline. We emphasise that net benefit is the primary DCA metric; the per-100 figures are a derived summary of the same net-benefit differential, reported here only because they aid clinical communication.
+
+\subsection{Secondary Sensitivity Branches}
+Secondary feature branches did not exceed the primary raw17 profile. For \texttt{raw17\_plus\_pheno} (raw), ROC-AUC was $0.827$ (internal) and $0.880$ (unseen). For \texttt{raw17\_plus\_adapted\_aging} (raw), ROC-AUC was $0.741$ (internal) and $0.775$ (unseen). These branches are reported as sensitivity analyses, and their split source is flagged separately when a deterministic fallback partition was used.
+
+\section{Discussion}
+This manuscript frames symptomatic KOA prediction as a methodologically transparent internal-validation study. Primary claims are anchored to a single pre-specified model-feature combination (Random Forest + raw17), and reporting follows the TRIPOD guidance\cite{Collins2015} with a completed checklist supplement. Internal risk-of-bias was assessed against the PROBAST domains\cite{Wolff2019}; the principal residual concerns are the absence of a true external cohort and the reliance on self-reported comorbidities.
+
+A key interpretation principle is the separation between statistical association and incremental predictive utility. Biological aging clocks may remain scientifically informative mechanistically, but in this cohort they did not consistently improve primary predictive performance over the raw17 sociodemographic and comorbidity baseline; they are therefore retained only as secondary sensitivity analyses. The primary raw17 model achieved ROC-AUC 0.847 (OOF) / 0.907 (holdout) and PR-AUC 0.688 / 0.791, substantially exceeding the prevalence baseline. The reliability diagnostics (Table~\ref{tab:reliability-oof}) identify a systematic under-prediction in the top decile of predicted risk -- a pattern that should be specifically monitored during any future external validation, as it may reflect the bounded-probability property of finite-depth Random Forest ensembles\cite{NiculescuMizil2005}. The Cox calibration-slope anomaly for the isotonic-calibrated variant is a known artefact of applying a logit-based summary to piecewise-constant output\cite{NiculescuMizil2005,VanCalster2019}; ECE and the decile table are the appropriate reliability evidence for that variant, and both show acceptable calibration.
+
+\paragraph{Comparison with the reference study.} The reference study by Fu et al.\cite{Fu2025} reported XGBoost-centred discrimination with biological age as the dominant predictor, using a 70/30 split. The present pipeline replicates the same outcome operationalisation and confirms that the CHARLS-derived raw17 feature set supports strong discrimination even without explicit biomarker enrichment. The methodological delta (Table~\ref{tab:paper-delta}) shows that the main structural difference is the adoption of an early stratified holdout and OOF validation rather than a single held-out test, which better separates development decisions from final performance claims.
+
+\paragraph{External validation and generalisability.} The most critical gap separating this study from submission-strength clinical claims is the absence of an independent external cohort. External validation on a demographically or geographically distinct population would allow genuine assessment of model transportability\cite{Steyerberg2019}. Candidate cohorts include the English Longitudinal Study of Ageing (ELSA), the Health and Retirement Study (HRS) in the United States, the Korean Longitudinal Study of Ageing (KLoSA), and the WHO SAGE cohorts. Feature harmonisation across survey instruments is non-trivial but feasible for the majority of raw17 variables, which are standard sociodemographic and comorbidity fields. Until external validation is completed, clinical-utility language remains explicitly limited to internal-validation decision-support signals and does not constitute evidence for prospective deployment.
+
+\paragraph{Strengths.} Strengths of this study include the large population-based cohort, transparent leakage controls, pre-specification of the primary model before development, multi-dimensional performance evaluation (discrimination, calibration, clinical utility, interpretability), and adherence to TRIPOD and PROBAST reporting standards. DCA shows strictly positive net benefit in the 10\%--30\% threshold band relative to both treat-all and treat-none in internal and holdout settings, providing a grounded internal-evidence basis for risk-stratification decision support.
+
+\section{Limitations}
+\begin{itemize}
+\item Evidence remains internal to one overall cohort context. The study uses a single national cohort (CHARLS), and the model's performance on geographically, ethnically, or institutionally distinct populations is unknown.
+\item The unseen holdout, although stronger than single-split reporting, is not a true external cohort. Participants in both partitions are drawn from the same data source and share the same distribution of confounders, so the holdout estimates a lower bound on expected performance degradation rather than true generalisability.
+\item Comorbidity and lifestyle variables are self-reported, inheriting all well-known CHARLS measurement-validity caveats, including recall bias and diagnostic ascertainment heterogeneity.
+\item Bootstrap confidence intervals for discrimination and calibration metrics are not yet tabulated (TRIPOD item 16). This will be addressed in the next revision; point estimates and the reliability diagrams are the current evidence basis for calibration.
+\item Some sensitivity branches rely on deterministic fallback splitting because engineered features are not fully represented in persisted Step 01 split artefacts; those results are therefore not the main evidence anchor.
+\item Cox calibration-slope/intercept estimates for isotonic-calibrated probabilities should be interpreted alongside ECE and the decile reliability diagram rather than in isolation, as explained in the reliability-diagnostics section.
+\item The model does not incorporate longitudinal follow-up; the KOA outcome is cross-sectionally derived and cannot distinguish incident from prevalent cases in the CHARLS extract used here.
+\end{itemize}
+
+\section{Conclusion}
+This study demonstrates a methodologically rigorous internal-validation pipeline for symptomatic KOA prediction in a large Chinese nationally-representative cohort. The pre-specified primary model (Random Forest + raw17) achieves strong discrimination (ROC-AUC 0.907 on the unseen holdout), acceptable calibration, and positive decision-curve net benefit in the clinically relevant 10\%--30\% risk threshold band. Calibration, reliability diagnostics, DCA, and SHAP interpretability layers together provide multi-dimensional evidence consistent with an internal-validation prediction-model study following TRIPOD standards. The findings justify proceeding to external validation on an independent cohort -- the key next milestone before submission-strength clinical claims or deployment recommendations can be made. Candidate external validation populations include ELSA, HRS, KLoSA, and WHO SAGE cohorts, which share the core sociodemographic and comorbidity predictors in the raw17 feature set.
+
+\section*{Data Availability}
+The dataset used in this study (``Raw Data of Biological Age'' derived from CHARLS) is publicly available under a CC BY 4.0 licence at Mendeley Data: \url{https://data.mendeley.com/datasets/3rv7mf5pv9/1} (Fu F, Mendeley Data V1, 2025; doi:10.17632/3rv7mf5pv9.1). The complete analysis pipeline code is available at the project repository.
+
+\begin{thebibliography}{99}
+
+\bibitem{Fu2025} Fu F, Dong L, Lian J, et al. Biological age threshold is associated with symptomatic knee osteoarthritis risk in Chinese adults: insights from machine learning analysis of a national cohort. \textit{PLOS One}. 2025;20(12):e0335250.
+
+\bibitem{Collins2015} Collins GS, Reitsma JB, Altman DG, Moons KGM. Transparent reporting of a multivariable prediction model for individual prognosis or diagnosis (TRIPOD): the TRIPOD statement. \textit{BMJ}. 2015;350:g7594.
+
+\bibitem{Wolff2019} Wolff RF, Moons KGM, Riley RD, et al. PROBAST: a tool to assess the risk of bias and applicability of prediction model studies. \textit{Ann Intern Med}. 2019;170(1):51--58.
+
+\bibitem{Zhao2014} Zhao Y, Hu Y, Smith JP, Strauss J, Yang G. Cohort profile: the China Health and Retirement Longitudinal Study (CHARLS). \textit{Int J Epidemiol}. 2014;43(1):61--68.
+
+\bibitem{Safiri2020} Safiri S, Kolahi AA, Smith E, et al. Global, regional and national burden of osteoarthritis 1990--2017: a systematic analysis of the Global Burden of Disease Study 2017. \textit{Ann Rheum Dis}. 2020;79(6):819--828.
+
+\bibitem{Vickers2006} Vickers AJ, Elkin EB. Decision curve analysis: a novel method for evaluating prediction models. \textit{Med Decis Making}. 2006;26(6):565--574.
+
+\bibitem{Vickers2016} Vickers AJ, van Calster B, Steyerberg EW. Net benefit approaches to the evaluation of prediction models, molecular markers, and diagnostic tests. \textit{BMJ}. 2016;352:i6.
+
+\bibitem{VanCalster2019} Van Calster B, McLernon DJ, van Smeden M, Wynants L, Steyerberg EW; Topic Group ``Evaluating diagnostic tests and prediction models'' of the STRATOS initiative. Calibration: the Achilles heel of predictive analytics. \textit{BMC Med}. 2019;17(1):230.
+
+\bibitem{NiculescuMizil2005} Niculescu-Mizil A, Caruana R. Predicting good probabilities with supervised learning. In: \textit{Proceedings of the 22nd International Conference on Machine Learning (ICML)}. 2005:625--632.
+
+\bibitem{Steyerberg2019} Steyerberg EW. \textit{Clinical Prediction Models: A Practical Approach to Development, Validation, and Updating}. 2nd ed. Springer; 2019.
+
+\bibitem{Lundberg2017} Lundberg SM, Lee SI. A unified approach to interpreting model predictions. In: \textit{Advances in Neural Information Processing Systems}. 2017.
+
+\bibitem{Brier1950} Brier GW. Verification of forecasts expressed in terms of probability. \textit{Monthly Weather Review}. 1950;78(1):1--3.
+
+\bibitem{Breiman2001} Breiman L. Random forests. \textit{Machine Learning}. 2001;45:5--32.
+
+\bibitem{Chen2016} Chen T, Guestrin C. XGBoost: a scalable tree boosting system. In: \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}. 2016:785--794.
+
+\bibitem{Klemera2006} Klemera P, Doubal S. A new approach to the concept and computation of biological age. \textit{Mechanisms of Ageing and Development}. 2006;127(3):240--248.
+
+\bibitem{Zadrozny2002} Zadrozny B, Elkan C. Transforming classifier scores into accurate multiclass probability estimates. In: \textit{Proceedings of the 8th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}. 2002.
+
+\end{thebibliography}
+
+\end{document}

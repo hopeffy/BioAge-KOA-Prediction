@@ -17,18 +17,22 @@ warnings.filterwarnings('ignore')
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, precision_score, recall_score
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 
-BASE_DIR = r'C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data'
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 STEP_DIR = os.path.join(BASE_DIR, 'step_02_baseline')
+STEP01_DIR = os.path.join(BASE_DIR, 'step_01_data_prep')
 
 SEEDS = [42, 123, 999]
 N_FOLDS = 5
+EARLY_SPLIT_TEST_SIZE = 0.20
+EARLY_SPLIT_RANDOM_STATE = 42
 
 def get_feature_sets(df):
     raw17 = ['wave', 'Time', 'Gender', 'Age_New', 'Marital', 'Education',
@@ -56,6 +60,77 @@ def get_feature_sets(df):
     
     return feature_sets
 
+
+def train_fitted_impute_and_scale(X_train_df, X_test_df):
+    X_train_proc = X_train_df.copy()
+    X_test_proc = X_test_df.copy()
+
+    numeric_cols = X_train_proc.select_dtypes(include=[np.number]).columns.tolist()
+    categorical_cols = [c for c in X_train_proc.columns if c not in numeric_cols]
+
+    if len(numeric_cols) > 0:
+        num_imputer = SimpleImputer(strategy='median')
+        X_train_proc[numeric_cols] = num_imputer.fit_transform(X_train_proc[numeric_cols])
+        X_test_proc[numeric_cols] = num_imputer.transform(X_test_proc[numeric_cols])
+
+    if len(categorical_cols) > 0:
+        cat_imputer = SimpleImputer(strategy='most_frequent')
+        X_train_proc[categorical_cols] = cat_imputer.fit_transform(X_train_proc[categorical_cols])
+        X_test_proc[categorical_cols] = cat_imputer.transform(X_test_proc[categorical_cols])
+
+        for col in categorical_cols:
+            train_values = pd.Series(X_train_proc[col]).astype(str)
+            mapping = {v: i for i, v in enumerate(train_values.unique())}
+            X_train_proc[col] = train_values.map(mapping).astype(float)
+            X_test_proc[col] = pd.Series(X_test_proc[col]).astype(str).map(mapping).fillna(-1.0).astype(float)
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train_proc.values)
+    X_test_scaled = scaler.transform(X_test_proc.values)
+    return X_train_scaled, X_test_scaled
+
+
+def load_dataset_partitions(dataset_df, dataset_key):
+    train_path = os.path.join(STEP01_DIR, f'{dataset_key}_internal_train.csv')
+    unseen_path = os.path.join(STEP01_DIR, f'{dataset_key}_unseen_test.csv')
+
+    if os.path.exists(train_path) and os.path.exists(unseen_path):
+        train_df = pd.read_csv(train_path)
+        unseen_df = pd.read_csv(unseen_path)
+        if 'KOA' in train_df.columns and 'KOA' in unseen_df.columns:
+            return train_df, unseen_df, 'step01_early_split'
+
+    train_df, unseen_df = train_test_split(
+        dataset_df,
+        test_size=EARLY_SPLIT_TEST_SIZE,
+        random_state=EARLY_SPLIT_RANDOM_STATE,
+        stratify=dataset_df['KOA'],
+    )
+    return train_df.reset_index(drop=True), unseen_df.reset_index(drop=True), 'step02_fallback_split'
+
+
+def evaluate_unseen_holdout(model, X_internal, y_internal, X_unseen, y_unseen):
+    X_internal_scaled, X_unseen_scaled = train_fitted_impute_and_scale(X_internal, X_unseen)
+
+    model_clone = type(model)(**model.get_params())
+    if isinstance(model_clone, CatBoostClassifier):
+        model_clone.fit(X_internal_scaled, y_internal, verbose=0)
+    elif isinstance(model_clone, LGBMClassifier):
+            model_clone.fit(X_internal_scaled, y_internal)
+    else:
+        model_clone.fit(X_internal_scaled, y_internal)
+
+    y_proba = model_clone.predict_proba(X_unseen_scaled)[:, 1]
+    y_pred = (y_proba >= 0.5).astype(int)
+
+    return {
+        'roc_auc': roc_auc_score(y_unseen, y_proba),
+        'f1': f1_score(y_unseen, y_pred),
+        'accuracy': accuracy_score(y_unseen, y_pred),
+        'precision': precision_score(y_unseen, y_pred, zero_division=0),
+        'recall': recall_score(y_unseen, y_pred),
+    }
+
 def evaluate_model(model, X, y, seeds=SEEDS, n_folds=N_FOLDS):
     results = []
     for seed in seeds:
@@ -63,17 +138,15 @@ def evaluate_model(model, X, y, seeds=SEEDS, n_folds=N_FOLDS):
         for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            X_test_scaled = scaler.transform(X_test)
+
+            X_train_scaled, X_test_scaled = train_fitted_impute_and_scale(X_train, X_test)
             
             model_clone = type(model)(**model.get_params())
             
             if isinstance(model_clone, CatBoostClassifier):
                 model_clone.fit(X_train_scaled, y_train, verbose=0)
             elif isinstance(model_clone, LGBMClassifier):
-                model_clone.fit(X_train_scaled, y_train, verbose=0)
+                    model_clone.fit(X_train_scaled, y_train)
             else:
                 model_clone.fit(X_train_scaled, y_train)
             
@@ -107,8 +180,8 @@ def main():
     print("=" * 80)
     print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     
-    dataset_a = pd.read_csv(os.path.join(BASE_DIR, 'step_01_data_prep', 'dataset_A_all.csv'))
-    dataset_b = pd.read_csv(os.path.join(BASE_DIR, 'step_02_baseline', '..', 'step_01_data_prep', 'dataset_B_ba55.csv'))
+    dataset_a = pd.read_csv(os.path.join(STEP01_DIR, 'dataset_A_all.csv'))
+    dataset_b = pd.read_csv(os.path.join(STEP01_DIR, 'dataset_B_ba55.csv'))
     
     if not os.path.exists(STEP_DIR):
         os.makedirs(STEP_DIR)
@@ -125,37 +198,68 @@ def main():
     
     all_results = []
     
-    for dataset_name, df in [('Dataset_A_12329', dataset_a), ('Dataset_B_7635', dataset_b)]:
+    dataset_configs = [
+        ('Dataset_A_12329', 'dataset_A', dataset_a),
+        ('Dataset_B_7635', 'dataset_B', dataset_b),
+    ]
+
+    for dataset_name, dataset_key, df in dataset_configs:
+        internal_df, unseen_df, split_source = load_dataset_partitions(df, dataset_key)
+
         print(f"\n{'='*80}")
-        print(f"  {dataset_name} (n={len(df)}, KOA rate={df['KOA'].mean()*100:.1f}%)")
+        print(
+            f"  {dataset_name} | split={split_source} | "
+            f"internal={len(internal_df)} (KOA={internal_df['KOA'].mean()*100:.1f}%) | "
+            f"unseen={len(unseen_df)} (KOA={unseen_df['KOA'].mean()*100:.1f}%)"
+        )
         print(f"{'='*80}")
-        
-        y = df['KOA']
+
+        y_internal = internal_df['KOA']
+        y_unseen = unseen_df['KOA']
         
         for fs_name, fs_cols in feature_sets.items():
-            if not all(col in df.columns for col in fs_cols):
+            if not all(col in internal_df.columns for col in fs_cols):
                 print(f"  SKIP {fs_name}: missing columns")
                 continue
-            
-            X = df[fs_cols]
+
+            X_internal = internal_df[fs_cols]
+            X_unseen = unseen_df[fs_cols]
             
             for model_name, model in models.items():
                 config_name = f"{dataset_name}|{fs_name}|{model_name}"
                 print(f"\n  Evaluating: {fs_name} + {model_name}")
                 
                 try:
-                    summary, _ = evaluate_model(model, X, y)
+                    summary, _ = evaluate_model(model, X_internal, y_internal)
+                    unseen_metrics = evaluate_unseen_holdout(
+                        model,
+                        X_internal,
+                        y_internal,
+                        X_unseen,
+                        y_unseen,
+                    )
+
                     summary['dataset'] = dataset_name
                     summary['feature_set'] = fs_name
                     summary['model'] = model_name
                     summary['n_features'] = len(fs_cols)
-                    summary['n_samples'] = len(df)
-                    summary['koa_rate'] = df['KOA'].mean()
+                    summary['split_source'] = split_source
+                    summary['n_internal_samples'] = len(internal_df)
+                    summary['n_unseen_samples'] = len(unseen_df)
+                    summary['internal_koa_rate'] = internal_df['KOA'].mean()
+                    summary['unseen_koa_rate'] = unseen_df['KOA'].mean()
+                    summary['unseen_roc_auc'] = unseen_metrics['roc_auc']
+                    summary['unseen_f1'] = unseen_metrics['f1']
+                    summary['unseen_accuracy'] = unseen_metrics['accuracy']
+                    summary['unseen_precision'] = unseen_metrics['precision']
+                    summary['unseen_recall'] = unseen_metrics['recall']
                     all_results.append(summary)
                     
-                    print(f"    ROC AUC: {summary['roc_auc_mean']:.4f} +/- {summary['roc_auc_std']:.4f}")
-                    print(f"    F1:      {summary['f1_mean']:.4f} +/- {summary['f1_std']:.4f}")
-                    print(f"    Acc:     {summary['accuracy_mean']:.4f} +/- {summary['accuracy_std']:.4f}")
+                    print(f"    Internal ROC AUC: {summary['roc_auc_mean']:.4f} +/- {summary['roc_auc_std']:.4f}")
+                    print(f"    Internal F1:      {summary['f1_mean']:.4f} +/- {summary['f1_std']:.4f}")
+                    print(f"    Internal Acc:     {summary['accuracy_mean']:.4f} +/- {summary['accuracy_std']:.4f}")
+                    print(f"    Unseen ROC AUC:   {summary['unseen_roc_auc']:.4f}")
+                    print(f"    Unseen F1:        {summary['unseen_f1']:.4f}")
                 except Exception as e:
                     print(f"    ERROR: {e}")
     
@@ -166,8 +270,15 @@ def main():
     print("\n" + "=" * 80)
     print("BASELINE RESULTS SUMMARY")
     print("=" * 80)
-    print("\nTop 10 configurations by ROC AUC:")
-    print(results_df[['dataset', 'feature_set', 'model', 'n_features', 'roc_auc_mean', 'roc_auc_std', 'f1_mean']].head(10).to_string(index=False))
+    print("\nTop 10 configurations by internal ROC AUC:")
+    print(
+        results_df[
+            [
+                'dataset', 'feature_set', 'model', 'n_features',
+                'roc_auc_mean', 'roc_auc_std', 'f1_mean', 'unseen_roc_auc', 'unseen_f1'
+            ]
+        ].head(10).to_string(index=False)
+    )
     
     print("\n\nComparison: Feature set impact (averaged across datasets and models):")
     fs_comparison = results_df.groupby('feature_set').agg({
@@ -193,13 +304,23 @@ def main():
     report.append("=" * 80)
     report.append(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     report.append("")
+    report.append("Validation protocol:")
+    report.append("  - Internal: 5-fold CV x 3 seeds on internal partition")
+    report.append("  - Unseen: early 80/20 holdout (Step 01) when available, deterministic fallback otherwise")
+    report.append("  - Missing data: train-fitted SimpleImputer (median/mode)")
+    report.append("")
     report.append("Datasets:")
     report.append(f"  Dataset A: {len(dataset_a)} rows, KOA rate={dataset_a['KOA'].mean()*100:.1f}%")
     report.append(f"  Dataset B: {len(dataset_b)} rows, KOA rate={dataset_b['KOA'].mean()*100:.1f}%")
     report.append("")
     report.append("Top 10 configurations:")
     for _, row in results_df.head(10).iterrows():
-        report.append(f"  {row['dataset']} | {row['feature_set']} | {row['model']} | AUC={row['roc_auc_mean']:.4f} +/- {row['roc_auc_std']:.4f} | F1={row['f1_mean']:.4f}")
+        report.append(
+            f"  {row['dataset']} | {row['feature_set']} | {row['model']} | "
+            f"AUC_internal={row['roc_auc_mean']:.4f} +/- {row['roc_auc_std']:.4f} | "
+            f"F1_internal={row['f1_mean']:.4f} | "
+            f"AUC_unseen={row['unseen_roc_auc']:.4f} | F1_unseen={row['unseen_f1']:.4f}"
+        )
     report.append("")
     report.append("Feature set comparison (avg across datasets & models):")
     for _, row in fs_comparison.iterrows():

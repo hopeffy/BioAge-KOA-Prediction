@@ -1,0 +1,33 @@
+Primary model (Random Forest + raw17) — refreshed run summary (2026-04-24)
+
+Internal OOF (raw probabilities):
+- n = 9863, prevalence = 13.32%
+- ROC-AUC = 0.8466
+- PR-AUC = 0.6878
+- Brier = 0.07009
+- ECE = 0.04526
+- Calibration slope = 0.98943
+- Calibration intercept = -0.03983
+- F1 (best-threshold reported) ~ 0.6495
+
+Unseen holdout (raw probabilities):
+- n = 2466, prevalence = 13.30%
+- ROC-AUC = 0.90691
+- PR-AUC = 0.79129
+- Brier = 0.05325
+- ECE = 0.05611
+- Calibration slope = 1.21637
+- Calibration intercept = 0.17756
+- F1 (holdout) ~ 0.8007
+
+Decision-curve (10%-30% threshold band):
+- Internal (raw): mean avoided unnecessary per 100 = 55.995 (relative reduction vs treat-all = 64.60%)
+- Unseen (raw): mean avoided unnecessary per 100 = 63.771 (relative reduction vs treat-all = 73.55%)
+
+Files produced:
+- clinical_metrics_summary.csv
+- calibration_summary.csv
+- dca_clinical_decision_summary.csv
+- step11_publication_paragraphs.txt
+
+Next: finalize manuscript references and optionally build PDF. If you want, I can expand references, run `pdflatex` to compile `manuscript_main.tex`, or prepare a submission-ready LaTeX checklist.

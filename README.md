@@ -1,252 +1,195 @@
-# KOA (Knee Osteoarthritis) Prediction and Clinical Translation Pipeline
+# BioAge-KOA-Prediction
 
-Last Updated: 2026-04-18
+**Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data**  
+Internal Validation with Early Unseen Holdout, Calibration, and Decision Analysis
 
-This repository contains an end-to-end KOA risk modeling workflow, from preprocessing experiments to clinical interpretability and publication-ready reporting.
+---
 
-## Scope
+## Study Overview
 
-- Data preparation and baseline modeling
-- Multi-stage feature engineering and robustness evaluation
-- Biological aging signal integration (KDM, adapted PhenoAge)
-- Real SHAP interpretability and SHAP interaction analysis
-- Clinical validation with calibration and Decision Curve Analysis (DCA)
-- Automated clinician-facing recommendation text and publication paragraphs
+This project implements a rigorous internal-validation machine-learning pipeline for predicting symptomatic knee osteoarthritis (KOA) in a CHARLS-derived cohort (n = 12,329; KOA prevalence 13.3%). Reporting follows the TRIPOD guidance and the PROBAST framework.
 
-## End-to-End Process Map
+**Primary model:** Random Forest (n_estimators=300) trained on the raw17 feature set (17 sociodemographic and clinical variables).
 
-| Phase | Main Script(s) | Purpose | Key Output Folder |
-|---|---|---|---|
-| Step 0 | scripts/step0_baseline_comparison.py, scripts/step0_imputation_comparison.py, scripts/step0_prepare_imputed_dataset.py | Preprocessing strategy comparisons | step0_baseline_comparison, phase1_preliminary |
-| Step 1 | scripts/step1_comprehensive_comparison.py, scripts/main_pipeline.py | Baseline + FE comparison | step1_comprehensive_comparison |
-| Step 2 | scripts/step2_robustness_evaluation.py | Multi-seed robustness validation | step2_robustness_evaluation |
-| Step 3 (old track) | scripts/step3_position_knees_experiments.py, scripts/step3_robust_feature_engineering.py | Feature dominance and robust FE checks | step3_position_knees_experiments |
-| Step 4 (old track) | scripts/step4_comprehensive_feature_selection.py, scripts/step4_feature_selection_comparison.py | Feature selection method comparison | step4_feature_selection_comparison |
-| Step 5-9 | scripts/step5_domain_specific_features.py, scripts/step6_feature_quality_audit.py, scripts/step7_groupwise_ablation.py, scripts/step8_repeated_cv_validation.py, scripts/step9_composite_score_fe.py | Domain features, quality audit, ablations, repeated CV | phase1_preliminary |
-| Step 10+ optimization | scripts/step10_default_model_comparison.py, scripts/step11_to_14_model_optimization.py | Model family comparison + tuning workflow | phase1_preliminary |
-| Step 01 (new pipeline) | scripts/step_01_data_prep.py | Build modeling dataset(s) | step_01_data_prep |
-| Step 02 (new pipeline) | scripts/step_02_baseline.py | New baseline modeling stage | step_02_baseline |
-| Step 03 (new pipeline) | scripts/step_03_kdm_ba.py | KDM and adapted aging clock generation | step_03_kdm_ba |
-| Step 04 (new pipeline) | scripts/step_04_ba_impact.py | Impact analysis, real SHAP, SHAP interactions | step_04_ba_impact |
-| Step 05-10 (new pipeline) | scripts/step_05_07_final.py, scripts/step_08_xgboost_fix.py, scripts/step_09_advanced_pipeline.py, scripts/step_10_paper_replication.py | Model finalization, advanced runs, replication | step_05_replication to step_10_paper_replication |
-| Step 11 (new pipeline) | scripts/step_11_clinical_validation.py | Calibration, DCA, clinical recommendation/report text | step_11_clinical_validation |
+**Key design choices:**
+- Early 80/20 stratified unseen holdout split, created before any model development
+- Train-fitted missing-data imputation (no leakage)
+- 5-fold stratified OOF validation on the internal partition
+- Calibration, Decision Curve Analysis (DCA), and SHAP interpretability
 
-## Latest Integrated Updates (April 2026)
+**Primary results (Random Forest + raw17):**
 
-### 1) Step 03: Aging Clock Layer Extended
+| Setting | Variant | ROC-AUC | PR-AUC | Brier | ECE |
+|---------|---------|---------|--------|-------|-----|
+| Internal OOF | Raw | 0.847 | 0.688 | 0.070 | 0.045 |
+| Internal OOF | Isotonic | 0.839 | 0.676 | 0.069 | 0.042 |
+| Unseen holdout | Raw | 0.907 | 0.791 | 0.053 | 0.056 |
+| Unseen holdout | Isotonic | 0.900 | 0.779 | 0.051 | 0.060 |
 
-Script: scripts/step_03_kdm_ba.py
+---
 
-Added/updated outputs:
-- BA_KDM_log
-- BA_KDM_orig
-- BIR_log
-- BIR_orig
-- PhenoAge_Adapted
-- PhenoAge_Adapted_Accel
-- Quartiles including PhenoAge_Adapted_Qint
+## Project Structure
 
-Main artifacts:
-- step_03_kdm_ba/dataset_A_with_kdm_ba.csv
-- step_03_kdm_ba/dataset_B_with_kdm_ba.csv
-- step_03_kdm_ba/step03_report.txt
-
-### 2) Step 04: Real SHAP + Clinical Interaction Filtering
-
-Script: scripts/step_04_ba_impact.py
-
-What is now enforced:
-- Real SHAP with TreeExplainer (no feature-importance proxy)
-- SHAP interaction values for XGBoost
-- SHAP waterfall local explanations for representative high-risk/median-risk cases
-- Clinical interaction filtering layer for medically meaningful pairs
-
-Clinical interaction filter targets:
-- Biological Age
-- BMI/BMI_New
-- Hypertension
-- Gender
-- hs-CRP (crp_mg.L / crp_original, when available)
-
-SHAP analyses currently generated:
-- raw17
-- raw17 + PhenoAge_Adapted
-- raw17 + hs-CRP (optional, if crp_mg.L exists)
-
-Main artifacts:
-- step_04_ba_impact/shap_importance_xgb.csv
-- step_04_ba_impact/shap_importance_xgb_raw17_plus_pheno.csv
-- step_04_ba_impact/shap_importance_xgb_raw17_plus_hscrp.csv
-- step_04_ba_impact/shap_interactions_xgb_raw17.csv
-- step_04_ba_impact/shap_interactions_xgb_raw17_plus_pheno.csv
-- step_04_ba_impact/shap_interactions_xgb_raw17_plus_hscrp.csv
-- step_04_ba_impact/shap_interactions_clinical_raw17.csv
-- step_04_ba_impact/shap_interactions_clinical_raw17_plus_pheno.csv
-- step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
-- step_04_ba_impact/shap_summary_xgb_raw17.png
-- step_04_ba_impact/shap_summary_xgb_raw17_plus_pheno.png
-- step_04_ba_impact/shap_summary_xgb_raw17_plus_hscrp.png
-- step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png
-- step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png
-- step_04_ba_impact/shap_waterfall_xgb_raw17_median_risk_case.png
-- step_04_ba_impact/shap_waterfall_cases_raw17.csv
-- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17.png
-- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_pheno.png
-- step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png
-- step_04_ba_impact/step04_report.txt
-
-### 3) Step 11: Clinical Translation + Publication Text Automation
-
-Script: scripts/step_11_clinical_validation.py
-
-What is now included:
-- OOF probability evaluation
-- Raw vs isotonic comparison
-- Calibration tables/curves
-- DCA net-benefit curves
-- 10%-30% threshold-band clinical decision summary
-- Automated recommendation text (clinician-facing)
-- Automated publication-ready Methods/Results paragraphs (EN/TR)
-
-Main artifacts:
-- step_11_clinical_validation/clinical_metrics_summary.csv
-- step_11_clinical_validation/step11_clinical_validation_report.txt
-- step_11_clinical_validation/dca_clinical_decision_summary.csv
-- step_11_clinical_validation/dca_clinical_recommendation_report.txt
-- step_11_clinical_validation/step11_publication_paragraphs.txt
-- step_11_clinical_validation/calibration_curve_raw17.png
-- step_11_clinical_validation/dca_curve_raw17.png
-
-## Current Key Results Snapshot
-
-Based on latest runs in this workspace:
-
-- Best discrimination among evaluated Step 11 configs:
-  - raw17 (raw)
-  - ROC-AUC: 0.8916
-  - PR-AUC: 0.7689
-  - Brier: 0.0581
-  - ECE: 0.0462
-
-- DCA clinical utility in 10%-30% threshold band:
-  - Best strategy: raw17 (raw)
-  - Estimated avoided unnecessary referrals/imaging: 61.9 per 100 patients vs treat-all
-  - Relative reduction: 71.4%
-
-- Clinical SHAP interactions (raw17 + hs-CRP example):
-  - BMI x Biological Age: INT=0.1622
-  - Biological Age x crp_mg.L: INT=0.1255
-  - BMI x crp_mg.L: INT=0.0888
-  - Gender x Biological Age: INT=0.0619
-  - Hypertension x Biological Age: INT=0.0357
-
-## Evidence-Backed Findings (English)
-
-1. Biomechanical stress is a dominant model mechanism.
-  Evidence: [SHAP interaction heatmap (raw17 + hs-CRP)](step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png), [Clinical interaction table](step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv)
-
-2. Inflammaging signal is explicitly captured as a high-impact interaction.
-  Evidence: [SHAP summary (raw17 + hs-CRP)](step_04_ba_impact/shap_summary_xgb_raw17_plus_hscrp.png), [Clinical interaction table](step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv)
-
-3. Local explanations are clinically interpretable at patient level.
-  Evidence: [Waterfall - high-risk positive case](step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png), [Waterfall - high-risk negative case](step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png), [Waterfall case index](step_04_ba_impact/shap_waterfall_cases_raw17.csv)
-
-4. The raw17 model provides meaningful net clinical benefit in the 10%-30% threshold band.
-  Evidence: [DCA curve (raw17)](step_11_clinical_validation/dca_curve_raw17.png), [DCA decision summary](step_11_clinical_validation/dca_clinical_decision_summary.csv), [Clinical recommendation report](step_11_clinical_validation/dca_clinical_recommendation_report.txt)
-
-5. Probability reliability is documented with explicit calibration diagnostics.
-  Evidence: [Calibration curve (raw17)](step_11_clinical_validation/calibration_curve_raw17.png), [Calibration table (raw)](step_11_clinical_validation/calibration_table_raw17_raw.csv), [Calibration table (isotonic)](step_11_clinical_validation/calibration_table_raw17_isotonic.csv)
-
-## Core Figure Set (for Manuscript)
-
-Use these three figure types as the primary visual package:
-
-1. SHAP explanation (waterfall + interaction)
-  - step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_positive.png
-  - step_04_ba_impact/shap_waterfall_xgb_raw17_high_risk_negative.png
-  - step_04_ba_impact/shap_interaction_heatmap_xgb_raw17_plus_hscrp.png
-  - step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
-
-2. Decision Curve Analysis (DCA)
-  - step_11_clinical_validation/dca_curve_raw17.png
-  - step_11_clinical_validation/dca_clinical_decision_summary.csv
-  - step_11_clinical_validation/dca_clinical_recommendation_report.txt
-
-3. Calibration curve
-  - step_11_clinical_validation/calibration_curve_raw17.png
-  - step_11_clinical_validation/calibration_table_raw17_raw.csv
-  - step_11_clinical_validation/calibration_table_raw17_isotonic.csv
-
-## Recommended Execution Order
-
-Use this order for a clean full rerun of the new pipeline:
-
-```powershell
-# 1) Activate environment
-cd c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data
-.\env\Scripts\Activate.ps1
-
-# 2) Build datasets
-python scripts/step_01_data_prep.py
-
-# 3) Baseline
-python scripts/step_02_baseline.py
-
-# 4) KDM + adapted aging clocks
-python scripts/step_03_kdm_ba.py
-
-# 5) SHAP + impact + replication
-python scripts/step_04_ba_impact.py
-
-# 6) Clinical validation + DCA + publication text
-python scripts/step_11_clinical_validation.py
+```
+BioAge-KOA-Prediction/
+│
+├── scripts/                          # Active manuscript-facing pipeline
+│   ├── step_01_data_prep.py          # Data loading, KOA definition, early split
+│   ├── step_02_baseline.py           # Baseline model comparison
+│   ├── step_03_kdm_ba.py             # KDM biological age computation
+│   ├── step_04_ba_impact.py          # SHAP analysis and feature impact
+│   ├── step_11_clinical_validation.py # Calibration + DCA (primary evaluation)
+│   └── step_13_reliability_diagnostics.py # Reliability diagrams (post-hoc)
+│
+├── step_01_data_prep/                # [generated] Split CSVs and metadata
+├── step_02_baseline/                 # [generated] Baseline results
+├── step_03_kdm_ba/                   # [generated] KDM-enriched dataset
+├── step_04_ba_impact/                # [generated] SHAP outputs
+├── step_11_clinical_validation/      # [generated] Metrics, calibration, DCA
+├── step_13_reliability_diagnostics/  # Reliability diagrams (pre-generated)
+│   ├── reliability_diagram_raw17_internal_oof.png
+│   ├── reliability_diagram_raw17_unseen_holdout.png
+│   └── calibration_slope_diagnostic_note.txt
+│
+├── manuscript_main.tex               # Main manuscript (LaTeX)
+├── supplement_methods_engineering.tex # Engineering workflow supplement
+├── supplement_tripod_checklist.tex   # TRIPOD checklist supplement
+├── requirements.txt                  # Python dependencies
+└── README.md                         # This file
 ```
 
-Optional advanced/final stages:
+---
+
+## Data Requirements
+
+- **Source:** "Raw Data of Biological Age" from CHARLS, published openly by Fanyu Fu on Mendeley Data
+- **Download:** [https://data.mendeley.com/datasets/3rv7mf5pv9/1](https://data.mendeley.com/datasets/3rv7mf5pv9/1)
+- **License:** CC BY 4.0 — free to use and reproduce with attribution
+- **Place the file at:** `BioAge-KOA-Prediction/Raw Data .xlsx`
+
+The dataset used in this study:
+- 15,545 baseline rows, 28 columns
+- After exclusion (position_knees non-missing): **Dataset A** (n = 12,329, KOA prevalence 13.32%)
+- Biological Age ≥ 55 filter: **Dataset B** (n = 7,635) for sensitivity analyses
+
+**Citation for dataset:** Fu F. Raw Data of Biological Age. Mendeley Data, V1. 2025. doi:10.17632/3rv7mf5pv9.1
+
+---
+
+## Installation
 
 ```powershell
-python scripts/step_05_07_final.py
-python scripts/step_08_xgboost_fix.py
-python scripts/step_09_advanced_pipeline.py
-python scripts/step_10_paper_replication.py
-```
-
-## Environment and Dependencies
-
-Install/update dependencies:
-
-```powershell
-cd c:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data
+# 1. Create and activate a virtual environment (optional but recommended)
+python -m venv env
 .\env\Scripts\Activate.ps1
+
+# 2. Install dependencies
 pip install -r requirements.txt
 ```
 
-Important packages include:
-- scikit-learn
-- xgboost
-- lightgbm
-- catboost
-- shap (real SHAP analysis)
-- pandas, numpy, matplotlib
+---
 
-## Output Folders at a Glance
+## Execution Order
 
-- step_03_kdm_ba: aging clocks and datasets with BA extensions
-- step_04_ba_impact: SHAP, SHAP interactions, clinical interaction subsets, replication/impact outputs
-- step_11_clinical_validation: calibration, DCA, clinical recommendation reports, publication paragraphs
+Run scripts from the **`BioAge-KOA-Prediction/`** directory:
 
-## Notes for Manuscript Preparation
+```powershell
+# Step 1: Data preparation and early split
+python scripts/step_01_data_prep.py
 
-If manuscript drafting starts immediately, use these two files first:
-- step_11_clinical_validation/step11_publication_paragraphs.txt
-- step_11_clinical_validation/dca_clinical_recommendation_report.txt
+# Step 2: Baseline model comparison
+python scripts/step_02_baseline.py
 
-For mechanistic interpretability claims, cite:
-- step_04_ba_impact/shap_interactions_clinical_raw17.csv
-- step_04_ba_impact/shap_interactions_clinical_raw17_plus_hscrp.csv
-- step_04_ba_impact/shap_interactions_clinical_raw17_plus_pheno.csv
+# Step 3: KDM biological age computation
+python scripts/step_03_kdm_ba.py
 
-## Legacy Notes
+# Step 4: SHAP feature impact analysis
+python scripts/step_04_ba_impact.py
 
-Older exploratory stage summaries are still preserved in repository outputs and scripts.
-This README is now the consolidated master process document for current and future runs.
+# Step 11: Clinical validation (calibration + DCA) - PRIMARY RESULTS
+python scripts/step_11_clinical_validation.py
+
+# Step 13: Reliability diagnostics (post-hoc, reads Step 11 outputs)
+python scripts/step_13_reliability_diagnostics.py
+```
+
+**Total estimated runtime:** 15–30 minutes (depends on CPU; Step 04 SHAP is the slowest).
+
+---
+
+## Key Output Files
+
+| File | Description |
+|------|-------------|
+| `step_01_data_prep/dataset_A_internal_train.csv` | Internal training partition (n ≈ 9,863) |
+| `step_01_data_prep/dataset_A_unseen_test.csv` | Unseen holdout partition (n ≈ 2,466) |
+| `step_11_clinical_validation/clinical_metrics_summary.csv` | Full metric table (all configs × variants × eval sets) |
+| `step_11_clinical_validation/calibration_summary.csv` | Calibration metrics (Brier, ECE, MCE, slope, intercept) |
+| `step_11_clinical_validation/dca_clinical_decision_summary.csv` | DCA 10%–30% threshold band summary |
+| `step_13_reliability_diagnostics/reliability_diagram_raw17_internal_oof.png` | Reliability diagram (OOF) |
+| `step_13_reliability_diagnostics/reliability_diagram_raw17_unseen_holdout.png` | Reliability diagram (holdout) |
+
+---
+
+## Feature Set (raw17)
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| wave | integer | Survey wave |
+| Time | integer | Survey year |
+| Gender | binary | Sex (1=male, 2=female) |
+| Age_New | ordinal | Age bucket (1=45–59, 2=≥60) |
+| Marital | binary | Marital status (1=married, 2=other) |
+| Education | ordinal | Educational attainment (1=low, 2=medium, 3=high) |
+| Residence | binary | Urban vs rural (1=urban, 2=rural) |
+| Hypertension | binary | Physician-diagnosed (0/1) |
+| Dyslipidemia | binary | Physician-diagnosed (0/1) |
+| Diabetes | binary | Physician-diagnosed (0/1) |
+| Cancer | binary | Physician-diagnosed (0/1) |
+| CVD | binary | Physician-diagnosed cardiovascular disease (0/1) |
+| Smoke | binary | Ever smoker (0/1) |
+| Drink | binary | Ever drinker (0/1) |
+| BMI | continuous | Measured body-mass index (kg/m²) |
+| BMI_New | ordinal | BMI category (1=underweight/normal, 2=overweight, 3=obese) |
+| Biological Age | continuous | CHARLS-supplied biological-age field |
+
+---
+
+## Reproducibility Notes
+
+1. **Random seed:** All splits and models use `random_state=42`.
+2. **Split:** A single 80/20 stratified split is created in Step 01 and reused by all downstream steps.
+3. **No hyperparameter tuning:** The primary Random Forest uses `n_estimators=300` and scikit-learn defaults. No grid search was applied to primary model claims.
+4. **Imputation:** `SimpleImputer` (median for numeric, most-frequent for categorical) is fitted on training data only within each CV fold.
+5. **Leakage controls:** `Arthritis` and `position_knees` (the two source columns defining the KOA outcome) are excluded from the feature set. Rows with missing `position_knees` are dropped.
+
+---
+
+## Limitations and Next Steps
+
+This study provides **internal validation** evidence only. Key limitations:
+
+- Evidence is limited to one overall cohort (CHARLS); results may not generalize to other populations or healthcare systems.
+- The unseen holdout, while more rigorous than single-split reporting, is drawn from the same cohort — it is not a true external validation.
+- Comorbidity and lifestyle variables are self-reported.
+- Bootstrap confidence intervals for discrimination and calibration metrics are planned for the next submission revision.
+
+**Next milestone:** External validation on an independent cohort (e.g., ELSA, HRS, KLoSA) is required before clinical deployment claims can be made.
+
+---
+
+## Citation
+
+If you use this code or the methodology described here, please cite the companion manuscript:
+
+> BioAge-KOA-Prediction Team. Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data: Internal Validation with Early Unseen Holdout, Calibration, and Decision Analysis. *[Journal]*, 2026.
+
+---
+
+## Manuscript and Supplements
+
+| Document | Description |
+|----------|-------------|
+| `manuscript_main.tex` | Main paper body (LaTeX) |
+| `supplement_methods_engineering.tex` | Engineering workflow details |
+| `supplement_tripod_checklist.tex` | TRIPOD 22-item checklist mapping |

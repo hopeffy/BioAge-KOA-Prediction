@@ -1,0 +1,249 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{xcolor}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={External Validation Draft --- BioAge-KOA-Prediction},
+}
+
+% Highlight placeholders
+\newcommand{\TBD}[1]{\textcolor{red}{\textbf{[TBD: #1]}}}
+\newcommand{\CITE}[1]{\textcolor{blue}{\textbf{[CITE: #1]}}}
+
+\title{DRAFT: External Validation Sections\\
+\large For integration into \texttt{manuscript\_main.tex} when data are available\\[4pt]
+\normalsize \texttt{BioAge-KOA-Prediction} --- HRS (replication) + ELSA (primary)}
+\author{BioAge-KOA-Prediction Team}
+\date{April 2026 --- Pre-data draft}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{%
+\textbf{How to use this file.}
+Each section below is a draft fragment ready for copy-paste into \texttt{manuscript\_main.tex}.
+Integration points are noted at the top of each section.
+Red \TBD{} markers indicate values to fill once data are analysed.
+Blue \CITE{} markers indicate references to add.
+Do \emph{not} submit this file; it is a working draft only.
+}}
+\end{center}
+
+\vspace{8pt}
+
+% ============================================================
+\section*{[METHODS] External Validation Cohorts}
+\noindent\textit{Integration point: Insert after \texttt{\textbackslash subsection\{Differences vs.\ Reference Study\}} in manuscript\_main.tex, before \texttt{\textbackslash section\{Results\}}.}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\subsection*{External Validation Cohorts}
+
+To assess the transportability of the primary model beyond the CHARLS cohort, external validation was planned in two independent longitudinal ageing cohorts with complementary roles: the Health and Retirement Study (HRS) served as a \emph{replication cohort} providing rapid cross-national assessment in a North American population, and the English Longitudinal Study of Ageing (ELSA) served as the \emph{primary external validation cohort} providing a European population with biomarker-grade data enabling computation of a full Biological Age analogue.
+
+\paragraph{HRS (replication cohort).}
+The Health and Retirement Study is a nationally representative biennial panel study of adults aged 51 and older in the United States \CITE{Juster2007HRS}. The publicly available RAND HRS Longitudinal Fat File was used \CITE{RAND2023HRS}. The KOA proxy outcome was defined as self-reported physician-diagnosed arthritis (\texttt{arthrhr}~$=$~``yes'') combined with reported knee or hip joint pain, consistent with the symptomatic joint-disease framework used in the development cohort. Biological Age was computed from available Venous Blood Study (VBS) biomarkers (waves 2006--2016) using the Klemera-Doubal method \cite{Klemera2006}, following the same protocol as \texttt{step\_03\_kdm\_ba.py}; participants without VBS data were analysed in a sensitivity analysis using the raw16 feature set (raw17 excluding Biological Age). Sample size after eligibility filtering: \TBD{n\_HRS} participants, KOA prevalence \TBD{prev\_HRS\%}.
+
+\paragraph{ELSA (primary external validation cohort).}
+The English Longitudinal Study of Ageing is a prospective panel study of English adults aged 50 and older \CITE{Steptoe2013ELSA}. Nurse visit waves (2, 4, 6, 8) provided measured biomarkers (CRP, total cholesterol, HDL cholesterol, HbA1c, creatinine) from which Biological Age was computed using the Klemera-Doubal method, enabling direct alignment with the raw17 feature set. The KOA proxy outcome was defined as self-reported physician-diagnosed arthritis or rheumatism combined with knee-specific pain in the past month, mapping to the CHARLS conjunction rule. ELSA was accessed via the UK Data Service under a data-sharing agreement. Sample size after eligibility filtering: \TBD{n\_ELSA} participants, KOA prevalence \TBD{prev\_ELSA\%}.
+
+\paragraph{Feature harmonisation.}
+Table~\ref{tab:harmonisation} summarises the mapping of each raw17 variable to HRS and ELSA equivalents. Variables rated harmonisation score $\geq 2$ (direct or derivable) were used in primary analyses; variables rated 1 (approximation) were used only in sensitivity analyses. All continuous variables were encoded on the same scale as the development cohort; ordinal variables were collapsed to the same levels (Education: low/medium/high; Age\_New: 45--59 / $\geq 60$; BMI\_New: $<25$ / 25--29.9 / $\geq 30$). Residence (urban vs rural) was approximated in ELSA using Office for National Statistics urban/rural classification; the HRS geographic rurality variable (\texttt{xurbancoded}) was dichotomised.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Feature harmonisation summary. Score: 3 = direct match, 2 = derivable, 1 = approximation, 0 = unavailable. Primary analysis uses score $\geq 2$; score~1 variables are sensitivity-analysis only.}
+\label{tab:harmonisation}
+\begin{tabular}{lp{3.5cm}p{3.5cm}cc}
+\toprule
+raw17 variable & HRS equivalent & ELSA equivalent & HRS score & ELSA score \\
+\midrule
+wave / Time & interview wave / year & interview wave / year & 3 & 3 \\
+Gender & \texttt{ragender} & \texttt{indsex} & 3 & 3 \\
+Age\_New & from \texttt{ragey\_b} & from \texttt{indager} & 3 & 3 \\
+Marital & \texttt{rmastat} (collapse) & \texttt{mstat} (collapse) & 3 & 3 \\
+Education & from \texttt{raedyrs} (cut-off) & from \texttt{edqual} (ISCED) & 2 & 2 \\
+Residence & \texttt{xurbancoded} (dichotomise) & ONS urban/rural classification & 2 & 1 \\
+Hypertension & \texttt{hibpe} & \texttt{hedawhy\_3} & 3 & 3 \\
+Dyslipidemia & \texttt{cholste} & \texttt{hedawhy\_14} & 3 & 3 \\
+Diabetes & \texttt{diabe} & \texttt{hedawhy\_5} & 3 & 3 \\
+Cancer & \texttt{cancre} & \texttt{hedawhy\_24} & 3 & 3 \\
+CVD & \texttt{hearte}+\texttt{stroke} & \texttt{hedawhy\_6}+\texttt{hedawhy\_9} & 2 & 2 \\
+Smoke & \texttt{smokev} & \texttt{smoker} (ever) & 3 & 3 \\
+Drink & \texttt{drinkd} & \texttt{drinker} (ever) & 3 & 3 \\
+BMI & self-reported (derived) & nurse-measured (waves 2,4,6,8) & 2 & 3 \\
+BMI\_New & derived from BMI & derived from BMI & 2 & 3 \\
+Biological Age & KDM-BA from VBS (subset) & KDM-BA from nurse biomarkers & 2 & 3 \\
+\midrule
+\multicolumn{3}{l}{Mean harmonisation score} & \TBD{mean\_HRS} & \TBD{mean\_ELSA} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{8pt}
+\hrule
+
+% ============================================================
+\section*{[METHODS] External Validation Statistical Analysis}
+\noindent\textit{Integration point: Insert immediately after the External Validation Cohorts subsection above.}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\subsection*{External Validation Statistical Analysis}
+
+The primary model (Random Forest, \texttt{n\_estimators=300}, \texttt{random\_state=42}) was re-fitted on the full CHARLS internal training partition ($n=9{,}863$) using the harmonised feature set for each external cohort. Train-fitted imputation (\texttt{SimpleImputer}, median for numeric, most-frequent for categorical) and standardisation (\texttt{StandardScaler}) were applied: the imputer and scaler were fitted on the CHARLS training data and applied without re-fitting to the external cohort, consistent with a transportability assessment rather than model re-development. No hyperparameter changes were made.
+
+Performance was evaluated using the same metric suite as the internal study: ROC-AUC, PR-AUC, Brier score, expected calibration error (ECE), Cox calibration slope and intercept, and decision-curve net benefit in the 10\%--30\% threshold band. Calibration transportability was considered acceptable if the Cox slope lay in the interval $[0.80, 1.20]$; slopes outside this range triggered logistic recalibration-in-the-large (intercept adjustment only, preserving the model's discrimination), which was then reported alongside the uncalibrated estimates \cite{Steyerberg2019,VanCalster2019}.
+
+Sensitivity analyses were conducted for: (i) the raw16 feature set (raw17 excluding Biological Age) in all cohorts, to isolate the marginal contribution of Biological Age to external transportability; (ii) HRS participants with VBS biomarker data versus the full HRS sample using the raw16 set; and (iii) ELSA nurse-visit waves only versus all waves. All analyses were pre-specified in the external validation protocol (\texttt{external\_validation\_cohorts.md}, \texttt{feature\_harmonization\_protocol.md}).
+
+\vspace{8pt}
+\hrule
+
+% ============================================================
+\section*{[RESULTS] External Validation Performance}
+\noindent\textit{Integration point: Insert after \texttt{\textbackslash subsection\{Secondary Sensitivity Branches\}} in manuscript\_main.tex. Replace TBD placeholders with actual numbers.}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\subsection*{External Validation Performance}
+
+Table~\ref{tab:external-metrics} presents the matched performance of the primary model (Random Forest + raw17 uncalibrated) across all evaluation settings: internal out-of-fold (OOF), unseen holdout, HRS replication, and ELSA primary external validation.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Primary model (Random Forest + raw17, uncalibrated) performance across all evaluation settings. Internal OOF and unseen-holdout values are carried forward from the development study. HRS and ELSA values are \TBD{} until external data analysis is complete. Cal.\ slope and intercept are from Cox logistic recalibration; see Methods for acceptability threshold ($[0.80, 1.20]$). Bootstrap 95\% confidence intervals (1{,}000 resamples) are reported in parentheses for all external estimates.}
+\label{tab:external-metrics}
+\begin{tabular}{lcccccc}
+\toprule
+Setting & ROC-AUC & PR-AUC & Brier & ECE & Cal.\ slope & Cal.\ intercept \\
+\midrule
+Internal OOF & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 & $-$0.040 \\
+Unseen holdout & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 & 0.178 \\
+\midrule
+HRS (replication) & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
+\quad raw16 sensitivity & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
+ELSA (primary ext.) & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
+\quad raw16 sensitivity & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} & \TBD{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{HRS (replication cohort).}
+\TBD{Write 2--3 sentences summarising HRS ROC-AUC, calibration slope (acceptable/unacceptable), DCA band result, and whether recalibration was applied. Example template:}
+
+\textit{``In the HRS replication cohort ($n=\TBD{}$, KOA prevalence $\TBD{}\%$), the primary model achieved ROC-AUC $\TBD{}$ (95\% CI \TBD{}--\TBD{}) and PR-AUC $\TBD{}$. Calibration slope was $\TBD{}$, [within / outside] the pre-specified acceptability interval of $[0.80, 1.20]$[; logistic recalibration-in-the-large was applied, yielding slope $\TBD{}$ and intercept $\TBD{}$]. In the 10\%--30\% threshold band, the model produced a mean net benefit of $\TBD{}$ versus treat-all, corresponding to $\TBD{}$ avoided unnecessary interventions per 100 patients. In the raw16 sensitivity analysis (Biological Age excluded), ROC-AUC was $\TBD{}$, indicating [minimal / substantial] loss of discrimination when the biological-age feature is unavailable.''}
+
+\paragraph{ELSA (primary external validation cohort).}
+\TBD{Write 3--4 sentences summarising ELSA results. Example template:}
+
+\textit{``In the primary external validation cohort (ELSA, $n=\TBD{}$, KOA prevalence $\TBD{}\%$), the primary model achieved ROC-AUC $\TBD{}$ (95\% CI \TBD{}--\TBD{}) and PR-AUC $\TBD{}$. Brier score was $\TBD{}$ and ECE was $\TBD{}$. Calibration slope was $\TBD{}$, [within / outside] the acceptability interval[; after logistic recalibration-in-the-large, slope improved to $\TBD{}$]. Decision-curve analysis in the 10\%--30\% threshold band showed a mean net benefit of $\TBD{}$ versus treat-all ($\TBD{}$ avoided unnecessary interventions per 100 patients, $\TBD{}\%$ relative reduction versus treat-all). The raw16 sensitivity analysis (Biological Age excluded) yielded ROC-AUC $\TBD{}$, confirming [/challenging] the marginal predictive contribution of the biological-age feature in the European cohort.''}
+
+\vspace{8pt}
+\hrule
+
+% ============================================================
+\section*{[DISCUSSION] Model Transportability and Generalisability}
+\noindent\textit{Integration point: Replace the existing ``External validation and generalisability'' paragraph in the Discussion section of manuscript\_main.tex with the text below (expanded version).}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\paragraph{External validation and generalisability.}
+External validation in the HRS and ELSA cohorts provides the first evidence of the model's transportability beyond the CHARLS development cohort. The two cohorts served complementary roles: HRS offered a rapid replication assessment across a geographically and demographically distinct North American population, while ELSA provided a European population with nurse-measured biomarkers enabling computation of a full Biological Age analogue consistent with the raw17 feature set.
+
+In HRS, \TBD{interpret result: e.g., ``discrimination remained moderate (ROC-AUC 0.XXX), consistent with expected attenuation from outcome-definition differences (arthritis without confirmed knee localisation) and cultural variation in self-reported comorbidity patterns''}. The calibration slope in HRS (\TBD{slope value}) \TBD{was within / exceeded} the pre-specified acceptability threshold of $[0.80, 1.20]$\TBD{; logistic recalibration-in-the-large restored slope to X.XXX with minimal change to discrimination}, indicating that the model's probability scale \TBD{transfers well to / requires adjustment for} the US population. The raw16 sensitivity analysis, which removes Biological Age from the feature set, \TBD{showed minimal discrimination loss (ΔROC-AUC = 0.0XX) / showed meaningful degradation (ΔROC-AUC = 0.0XX)}, suggesting that \TBD{the remaining 16 sociodemographic and comorbidity variables carry most of the predictive signal in HRS / Biological Age is the marginal contributor that does not transport to HRS without biomarker data}.
+
+In ELSA, \TBD{interpret result: e.g., ``discrimination was broadly maintained (ROC-AUC 0.XXX), and calibration slope was 0.XXX, within the pre-specified acceptability interval''}. The ELSA result is methodologically stronger than HRS because: (i) Biological Age was computed from nurse-measured biomarkers rather than a survey proxy, preserving the full raw17 feature representation; (ii) the KOA outcome was defined with greater specificity using a knee-localised pain module; and (iii) the UK population, while ethnically distinct from the Chinese CHARLS cohort, shares broadly comparable ageing-cohort study design and self-reported comorbidity ascertainment methods. \TBD{If ELSA performance is good: ``Taken together, the consistency of discrimination and calibration across US and UK external settings provides evidence of meaningful cross-national transportability for the core sociodemographic and comorbidity predictors in the raw17 feature set.'' / If performance drops: ``The attenuation in ELSA relative to internal validation (ΔROC-AUC = 0.XXX) is consistent with typical prediction model transportability patterns reported in the literature [CITE], and should be interpreted alongside the calibration and DCA findings before any deployment recommendation is made.''}
+
+Across both external cohorts, the decision-curve net benefit in the 10\%--30\% threshold band \TBD{remained strictly positive versus treat-all and treat-none / was attenuated relative to internal validation}, indicating that \TBD{the model retains internal clinical decision-support signal in independent populations / deployment would require recalibration before clinical use}. The raw16 sensitivity analyses confirm that \TBD{the majority of clinical utility is preserved even when Biological Age is replaced by a simpler age-bucket variable, which has important implications for settings without biomarker data}.
+
+Several methodological limitations apply specifically to the external validation. In HRS, self-reported BMI and the approximated KOA outcome introduce measurement noise not present in CHARLS or ELSA. In ELSA, the Biological Age computed from five biomarkers differs from the CHARLS-supplied Biological Age field in its derivation basis; any attenuation attributable to this derivation difference cannot be fully disentangled from true population-level transportability loss. Both external cohorts are predominantly non-East-Asian, introducing potential between-population heterogeneity in joint anatomy, obesity-threshold effects on KOA risk, and comorbidity co-occurrence patterns. These differences should be explicitly stated in any clinical-use guidance derived from this model.
+
+\vspace{8pt}
+\hrule
+
+% ============================================================
+\section*{New References to Add}
+\noindent\textit{Add these \texttt{\textbackslash bibitem} entries to the \texttt{thebibliography} environment in manuscript\_main.tex.}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\begin{verbatim}
+\bibitem{Juster2007HRS} Juster FT, Suzman R. An overview of the Health and
+  Retirement Study. J Hum Resour. 1995;30(suppl):S7--S56.
+
+\bibitem{RAND2023HRS} RAND Corporation. RAND HRS Longitudinal File 2020
+  (V2). Santa Monica, CA: RAND Corporation; 2023.
+  https://www.rand.org/well-being/social-and-behavioral-policy/
+  centers/aging/dataprod/hrs-data.html
+
+\bibitem{Steptoe2013ELSA} Steptoe A, Breeze E, Banks J, Nazroo J.
+  Cohort profile: the English Longitudinal Study of Ageing. Int J Epidemiol.
+  2013;42(6):1640--1648.
+
+\bibitem{Levine2018PhenoAge} Levine ME, Lu AT, Quach A, et al. An epigenetic
+  biomarker of aging for lifespan and healthspan. Aging (Albany NY).
+  2018;10(4):573--591.
+\end{verbatim}
+
+% ============================================================
+\section*{Integration Checklist}
+\noindent\textit{Complete this checklist when external data analysis is done and you are ready to integrate into manuscript\_main.tex.}
+
+\vspace{4pt}
+\hrule
+\vspace{8pt}
+
+\begin{enumerate}
+  \item[\(\square\)] Fill all \TBD{} placeholders in the Results section with actual values.
+  \item[\(\square\)] Fill all \TBD{} placeholders in the Discussion paragraph with interpretation sentences.
+  \item[\(\square\)] Add \texttt{\textbackslash bibitem} entries for HRS, ELSA, and Levine2018PhenoAge to \texttt{manuscript\_main.tex}.
+  \item[\(\square\)] Insert Methods subsection ``External Validation Cohorts'' after \texttt{\textbackslash subsection\{Differences vs.\ Reference Study\}}.
+  \item[\(\square\)] Insert Methods subsection ``External Validation Statistical Analysis'' immediately after.
+  \item[\(\square\)] Update Table~1 (\texttt{tab:table1}) in manuscript to add a comparison column for each external cohort (key demographics).
+  \item[\(\square\)] Insert Results subsection ``External Validation Performance'' after \texttt{\textbackslash subsection\{Secondary Sensitivity Branches\}}.
+  \item[\(\square\)] Replace the existing ``External validation and generalisability'' paragraph in Discussion with the full text from this draft.
+  \item[\(\square\)] Update the Limitations section: remove ``absence of a true external cohort'' limitation; replace with cohort-specific caveats (HRS outcome noise, ELSA BA derivation, non-East-Asian populations).
+  \item[\(\square\)] Update Conclusion to reflect actual external validation findings.
+  \item[\(\square\)] Update TRIPOD checklist supplement: fill in items 10c, 10e, 12, 13c, 17, 19a (currently marked NA for external validation).
+  \item[\(\square\)] Update abstract with external validation summary sentence and key performance figures.
+  \item[\(\square\)] Add sample size and prevalence numbers for each external cohort to Table~1 or a new Table~1b.
+  \item[\(\square\)] Verify all \CITE{} blue markers are replaced with proper \texttt{\textbackslash cite\{\}} commands.
+\end{enumerate}
+
+\vspace{12pt}
+\begin{center}
+\textit{End of draft --- \texttt{draft\_external\_validation.tex} --- BioAge-KOA-Prediction}
+\end{center}
+
+\end{document}

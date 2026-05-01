@@ -32,7 +32,7 @@ from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
 import shap
 
-BASE_DIR = r'C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data'
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 STEP_DIR = os.path.join(BASE_DIR, 'step_04_ba_impact')
 
 def _select_positive_class_shap(raw_values):

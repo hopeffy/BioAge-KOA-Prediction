@@ -1,0 +1,95 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.0cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{setspace}
+
+\setstretch{1.06}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={TRIPOD Checklist Supplement},
+  pdfauthor={BioAge-KOA-Prediction Team}
+}
+
+\title{TRIPOD Checklist Supplement for:\\
+\large Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data}
+\author{BioAge-KOA-Prediction Team}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+This supplement maps the 22 items of the TRIPOD statement (Collins et al.\ 2015, \textit{BMJ} 350:g7594) to the corresponding sections of the companion main manuscript (\texttt{manuscript\_main.tex}). TRIPOD-D denotes an item applicable to model development; TRIPOD-V denotes validation. The present study is a development study with internal validation only (OOF and an early unseen holdout partition drawn from the same cohort); external-validation items (10c, 10e, 12, 13c, 17, 19a) are therefore marked ``NA (development study)''. A full external validation remains the principal next milestone.
+
+\begin{longtable}{p{0.9cm} p{2.8cm} p{4.6cm} p{6.6cm}}
+\caption{TRIPOD items mapped to the main manuscript.}\label{tab:tripod}\\
+\toprule
+Item & Section & Item description (summary) & Location in \texttt{manuscript\_main.tex} \\
+\midrule
+\endfirsthead
+\toprule
+Item & Section & Item description (summary) & Location \\
+\midrule
+\endhead
+1 & Title & Identify study as prediction-model development, and target population & Title (development with internal validation, CHARLS-derived) \\
+2 & Abstract & Structured abstract with objective, source of data, participants, outcome, predictors, analysis, results, conclusions & Abstract \\
+3a & Background/Objectives & Explain medical context (prevalence, health burden) and rationale for developing a prediction model & Introduction, paragraph 1 (Safiri 2020 cited) \\
+3b & Background/Objectives & Specify objectives, including whether development, validation, or both & Introduction, paragraph 2 (development + internal validation) \\
+4a & Methods -- Source of data & Describe study design and data source & Methods: \emph{Study Cohort and Exclusion Cascade} (CHARLS Sheet1, n=15{,}545) \\
+4b & Methods -- Source of data & Specify the key dates, including start of accrual, end of follow-up, and date of primary outcome & Methods: Dataset A derived from CHARLS extract; wave/Time columns retained as raw17 predictors \\
+5a & Methods -- Participants & Specify key elements of the setting (e.g., geographic, primary care, hospital) & Methods: \emph{Study Cohort and Exclusion Cascade}; CHARLS nationally representative cohort (Zhao 2014) \\
+5b & Methods -- Participants & Describe eligibility criteria & Methods: exclusion rule \texttt{position\_knees} non-missing; flow described in cohort subsection \\
+5c & Methods -- Participants & Describe treatments received, if relevant & NA (observational cohort, not a treatment study) \\
+6a & Methods -- Outcome & Define the outcome that is predicted, including how and when it was assessed & Methods: \emph{Study Objective and Outcome}; KOA = Arthritis$=$``yes''\ $\wedge$\ position\_knees$=$``yes'' \\
+6b & Methods -- Outcome & Report any actions to blind assessment of the outcome to be predicted & NA (outcome derived from self-reported CHARLS fields; blinding not applicable) \\
+7a & Methods -- Predictors & Clearly define all predictors used in developing the model & Methods: \emph{Feature Set (raw17)} with Table \texttt{raw17} enumerating all 17 variables \\
+7b & Methods -- Predictors & Report any actions to blind assessment of predictors for the outcome & NA (predictors are CHARLS-recorded variables; blinding not applicable) \\
+8 & Methods -- Sample size & Explain how the study size was arrived at & Methods: cohort is the maximal eligible subset of CHARLS Sheet1 after the single exclusion rule; no a priori sample-size calculation because the study uses the full eligible cohort \\
+9 & Methods -- Missing data & Describe how missing data were handled, e.g. complete-case analysis, single imputation, multiple imputation & Methods: \emph{Missing Data Handling}; raw17 + outcome have 0\% missingness in Dataset A; train-fitted \texttt{SimpleImputer} retained as safety net for sensitivity branches \\
+10a & Methods -- Statistical analysis methods & For development: describe how predictors were handled (continuous treatment, transformations, interactions) & Methods: \emph{Feature Set}; continuous variables (BMI, Biological Age) left on native scale; scaling via \texttt{StandardScaler} fitted on train only \\
+10b & Methods -- Statistical analysis methods & Specify type of model, all model-building procedures, and method for internal validation & Methods: \emph{Primary and Secondary Modeling Strategy} (Random Forest, \texttt{n\_estimators=300}, defaults); \emph{Evaluation Framework} (stratified 5-fold OOF + unseen holdout) \\
+10c & Methods -- Statistical analysis methods & For validation: describe how predictions were calculated & NA (development study); internally, OOF predictions on internal partition and refit-then-predict on unseen holdout \\
+10d & Methods -- Statistical analysis methods & Specify all measures used to assess model performance & Methods: \emph{Evaluation Framework}; discrimination (ROC-AUC, PR-AUC), calibration (Brier, ECE, MCE, slope/intercept, reliability diagram), utility (DCA net benefit, per-100 derived) \\
+10e & Methods -- Statistical analysis methods & For validation: differences between development/validation data in setting, predictors, outcome, inclusion/exclusion criteria & NA (development study); unseen holdout drawn from the same cohort \\
+11 & Methods -- Risk groups & Provide details on how risk groups were created, if done & Methods: \emph{Class-Imbalance Handling}; no discretised risk-groups step, but threshold-band (10\%--30\%) reported for DCA \\
+12 & Methods -- Development vs validation & For validation: identify any differences from development data & NA (development study) \\
+13a & Results -- Participants & Describe the flow of participants, including the number of participants with and without outcome, follow-up time & Methods: \emph{Study Cohort and Exclusion Cascade} (15{,}545 $\to$ 12{,}329 $\to$ 9{,}863 / 2{,}466); Table 1 gives outcome counts for each split \\
+13b & Results -- Participants & Describe the characteristics of the participants, including the number of participants with missing data for predictors and outcome & Table 1 (demographics + comorbidities + split-level prevalence); no missing data in raw17 or outcome \\
+13c & Results -- Participants & For validation: show a comparison with the development data of the distribution of important variables & NA (development study); but Table 1 shows internal-vs-unseen balance of key covariates \\
+14a & Results -- Model development & Specify the number of participants and outcome events in each analysis & Primary-metrics table: $n=9{,}863$ internal (1{,}314 events), $n=2{,}466$ unseen (328 events) \\
+14b & Results -- Model development & If done, report the unadjusted association between each candidate predictor and outcome & Provided via SHAP global-importance figures in the engineering supplement and Step 04 artefacts (\texttt{step\_04\_ba\_impact}) \\
+15a & Results -- Model specification & Present the full prediction model to allow predictions for individuals & The fitted Random Forest is a non-parametric ensemble; the 300-tree forest is not publishable as closed-form coefficients. The training data, code (\texttt{step\_01\_data\_prep.py}, \texttt{step\_11\_clinical\_validation.py}), hyperparameters, and random seed are fully disclosed to allow deterministic re-fitting. \\
+15b & Results -- Model specification & Explain how to use the prediction model & Methods: \emph{Primary and Secondary Modeling Strategy}; end users would refit the documented pipeline on their data or apply the persisted model with the documented preprocessing (median/mode imputation, StandardScaler) \\
+16 & Results -- Model performance & Report performance measures (with CIs) for the prediction model & Main manuscript Table ``primary-metrics''. CIs are not yet tabulated; bootstrap CIs are earmarked for the next submission revision. \\
+17 & Results -- Model-updating & If done, report the results from any model updating (e.g., model specification, model performance) & NA (no external cohort; no model updating performed) \\
+18 & Discussion -- Limitations & Discuss any limitations of the study (e.g., non-representative sample, few events per predictor, missing data) & \emph{Limitations} section in main manuscript \\
+19a & Discussion -- Interpretation & For validation: discuss results with reference to performance in the development data & NA (development study) \\
+19b & Discussion -- Interpretation & Give an overall interpretation of the results, considering objectives, limitations, similar studies, and other relevant evidence & \emph{Discussion} paragraph 1--2 in main manuscript \\
+20 & Discussion -- Implications & Discuss the potential clinical use of the model and implications for future research & \emph{Discussion} final paragraph; \emph{Conclusion} \\
+21 & Other -- Supplementary information & Provide information about the availability of supplementary resources, such as study protocol, web calculator, and data sets & \emph{supplement\_methods\_engineering.tex}, \emph{supplement\_tripod\_checklist.tex} (this file), reliability-diagnostics artefacts in \texttt{step\_13\_reliability\_diagnostics/}, and the full code base at the project repository root. The dataset is publicly available at Mendeley Data (CC BY 4.0): \url{https://data.mendeley.com/datasets/3rv7mf5pv9/1} (Fu F, doi:10.17632/3rv7mf5pv9.1). \\
+22 & Other -- Funding & Give the source of funding and the role of the funders for the present study & To be added by authors on formal submission (not applicable to pre-submission draft) \\
+\bottomrule
+\end{longtable}
+
+\section*{PROBAST Notes (Wolff et al.\ 2019)}
+Internal risk-of-bias assessment was performed informally against the four PROBAST domains:
+\begin{itemize}
+\item \textbf{Participants:} low concern -- participants are CHARLS cohort members; exclusion rule is single and transparent.
+\item \textbf{Predictors:} moderate concern -- several predictors (comorbidities, smoking, drinking) are self-reported; this is noted in \emph{Limitations}.
+\item \textbf{Outcome:} moderate concern -- outcome is derived from two self-reported CHARLS items; the derivation rule is explicit and verified for internal consistency (100\% match).
+\item \textbf{Analysis:} low concern -- the exclusion cascade precedes the split, the split is performed once before model development, imputation is train-fitted, and performance is reported with OOF plus a held-out unseen partition; residual concerns relate to (i) the isotonic-slope interpretation artefact (addressed in the main text) and (ii) the absence of bootstrap confidence intervals (flagged for the next revision).
+\end{itemize}
+
+The principal residual sources of applicability concern are the absence of a true external cohort and reliance on self-reported comorbidity variables.
+
+\end{document}

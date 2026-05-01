@@ -14,7 +14,7 @@ import os
 import warnings
 warnings.filterwarnings('ignore')
 
-BASE_DIR = r'C:\Users\eftel\OneDrive\Masaüstü\bioinformatics-data'
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 STEP_DIR = os.path.join(BASE_DIR, 'step_03_kdm_ba')
 
 def calculate_kdm_ba(df, biomarker_cols, age_col='Biological Age'):

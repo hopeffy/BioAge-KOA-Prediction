@@ -1,0 +1,59 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{setspace}
+
+\setstretch{1.06}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{Supplementary Methods:\\Engineering Workflow and Reproducibility Artifacts}
+\author{BioAge-KOA-Prediction Team}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+This supplement contains engineering-level workflow details intentionally omitted from the main manuscript body to preserve scientific readability.
+
+\section{Execution Order (active manuscript-facing pipeline)}
+\begin{verbatim}
+python scripts/step_01_data_prep.py
+python scripts/step_02_baseline.py
+python scripts/step_03_kdm_ba.py
+python scripts/step_04_ba_impact.py
+python scripts/step_11_clinical_validation.py
+python scripts/step_13_reliability_diagnostics.py
+\end{verbatim}
+
+\section{Step Mapping and Artifacts}
+\begin{longtable}{p{2.1cm}p{4.2cm}p{7.6cm}}
+\toprule
+Step & Script & Main Outputs \\
+\midrule
+01 & step\_01\_data\_prep.py & dataset\_A\_all.csv, dataset\_B\_ba55.csv, dataset\_A\_internal\_train.csv, dataset\_A\_unseen\_test.csv, dataset\_B\_internal\_train.csv, dataset\_B\_unseen\_test.csv, early\_split\_metadata.csv \\
+02 & step\_02\_baseline.py & baseline\_results.csv, step02\_report.txt \\
+03 & step\_03\_kdm\_ba.py & dataset\_A\_with\_kdm\_ba.csv, step03\_report.txt \\
+04 & step\_04\_ba\_impact.py & shap\_importance\_*.csv, shap\_interactions\_*.csv, shap\_waterfall\_*.png, feature\_impact\_comparison.csv \\
+11 & step\_11\_clinical\_validation.py & clinical\_metrics\_summary.csv, calibration\_summary.csv, dca\_clinical\_decision\_summary.csv, calibration\_table\_raw17\_*.csv, calibration\_curve\_*.png, dca\_curve\_*.png, step11\_clinical\_validation\_report.txt \\
+13 & step\_13\_reliability\_diagnostics.py & reliability\_diagram\_raw17\_internal\_oof.png, reliability\_diagram\_raw17\_unseen\_holdout.png, calibration\_slope\_diagnostic\_note.txt (post-hoc reliability artefacts; reads Step 11 outputs, no retraining) \\
+\bottomrule
+\end{longtable}
+
+\section{Validation and Leakage Controls}
+\begin{itemize}
+\item Early 80/20 stratified split generated before active model development in Step 01.
+\item Active pipeline uses train-fitted imputation only (SimpleImputer median/mode).
+\item Internal discrimination and calibration are reported using OOF predictions.
+\item Unseen holdout metrics are reported side-by-side with internal OOF summaries.
+\end{itemize}
+
+\section{Legacy and Exploratory Branches}
+Legacy branch scripts and prior optimization tracks are preserved for reproducibility and auditability, but they are not used as primary evidence in the main manuscript claim structure.
+
+\end{document}
