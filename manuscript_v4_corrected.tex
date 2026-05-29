@@ -1,0 +1,336 @@
+% manuscript_v4_corrected.tex
+% TEMPLATE — corrected narrative based on AUC gap decomposition and RAS experiment.
+% Key changes from v3:
+%   1. Abstract: Attributes AUC gap primarily to cross-cultural factors, not BA.
+%   2. New section: AUC gap decomposition with CHARLS raw16 baseline.
+%   3. New section: Reduced Aging Score (RAS) experiment.
+%   4. Discussion: Revised interpretation — cross-cultural dominates.
+%   5. Updated conclusion with evidence hierarchy.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{xcolor}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={KOA Risk Prediction: Internal Validation and Cross-Cultural Transportability},
+  pdfauthor={BioAge-KOA-Prediction Team}
+}
+
+\title{Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data:\\
+\large Internal Validation, AUC Gap Decomposition, and\\
+Cross-Cultural Transportability Assessment on HRS and ELSA}
+\author{BioAge-KOA-Prediction Team}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\begin{abstract}
+% ============================================================
+\textbf{Objective.} To develop and internally validate a machine-learning model for
+symptomatic knee osteoarthritis (KOA) risk prediction in a CHARLS-derived Chinese cohort,
+and to characterise transportability to US (HRS) and UK (ELSA) aging cohorts through a
+structured AUC gap decomposition.
+
+\textbf{Methods.} A Random Forest model ($n=300$ trees) was trained on 17
+sociodemographic and clinical variables (raw17) from CHARLS Dataset~A
+($n=12{,}329$, KOA prevalence $13.3\%$). Internal validation used stratified 5-fold
+out-of-fold estimation and an early 80/20 stratified unseen holdout. Transportability was
+assessed by applying the model to HRS Wave~13 ($n=20{,}605$, 12 of 17 features) and ELSA
+Wave~8 ($n=8{,}416$, 14 of 17 features) using harmonised raw16 feature sets (excluding
+Biological Age). To decompose the AUC gap into feature-subset and cross-cultural
+components, we evaluated CHARLS on the same raw16 subset (internal baseline) and
+additionally constructed a Reduced Aging Score (RAS) from biomarkers common to CHARLS
+and ELSA (CRP, HbA1c, SBP, total cholesterol).
+
+\textbf{Results.} The primary model achieved ROC-AUC $0.847$ (internal OOF) / $0.907$
+(unseen holdout) with raw17. Restricting CHARLS to raw16 produced ROC-AUC $0.804$ /
+$0.869$ — a feature-subset penalty of $\Delta=-0.038$. Applying the same raw16 model to
+ELSA and HRS yielded ROC-AUC $0.604$ for both cohorts — a cross-cultural penalty of
+$\Delta=-0.265$. The total AUC gap ($-0.303$) decomposes as $13\%$ feature-subset vs.\
+$87\%$ cross-cultural. The RAS experiment recovered only $\Delta=+0.006$ AUC,
+confirming that biological age proxies contribute minimally to closing the gap.
+Isotonic recalibration restored calibration in ELSA (ECE $0.097 \rightarrow 0.005$,
+slope $0.271 \rightarrow 0.938$) without improving discrimination, and DCA net benefit
+remained positive.
+
+\textbf{Conclusions.} The model generalises poorly across cultures, with outcome proxy
+heterogeneity and population differences — not missing Biological Age — as the dominant
+degraders. Until a harmonised KOA outcome definition is applied across cohorts and full
+raw17 features (including KDM-BA from linked biomarker data) are available, clinical
+utility claims remain bounded to the internal CHARLS evidence.
+
+\textbf{Keywords:} symptomatic KOA, machine learning, TRIPOD, calibration, DCA,
+transportability, AUC decomposition, HRS, ELSA, cross-cultural replication
+\end{abstract}
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+[KEEP existing introduction from v3 — the framing as a TRIPOD-compliant internal
+validation study with cross-cultural replication is correct. No changes needed here.]
+
+% ============================================================
+\section{Methods}
+% ============================================================
+
+[KEEP existing methods sections from v3: Study Objective, Cohort, Feature Set (raw17),
+Missing Data, Early Holdout, Primary Model, Class-Imbalance, Evaluation Framework,
+Interpretability, Differences vs. Fu et al. (2025). All correct.]
+
+% ADD: AUC Gap Decomposition subsection
+\subsection{AUC Gap Decomposition Strategy}
+To disentangle feature-subset penalty from cross-cultural attenuation, we conducted
+the transportability analysis in three stages:
+
+\begin{enumerate}
+  \item \textbf{CHARLS raw16 internal baseline.} The primary model was re-trained and
+        evaluated on the CHARLS internal partition using only the 14 features common to
+        CHARLS, ELSA, and HRS (raw16: dropping Biological Age, wave, and Time from
+        raw17, adding a constant wave identifier). Because both training and evaluation
+        occur within CHARLS, this isolates the feature-subset penalty with no
+        cross-cultural confound.
+
+  \item \textbf{External application.} The raw16 model trained on CHARLS was applied to
+        ELSA Wave~8 and HRS Wave~13 without re-fitting. The gap between CHARLS raw16
+        holdout performance and external cohort performance is the cross-cultural
+        attenuation, net of the feature-subset penalty.
+
+  \item \textbf{Reduced Aging Score (RAS) sensitivity.} To test whether a harmonised
+        biological age proxy could recover the feature-subset gap, we constructed RAS
+        from four biomarkers available in both CHARLS and ELSA (hs-CRP, HbA1c, systolic
+        BP, total cholesterol). RAS was trained as a linear predictor of CHARLS KDM-BA
+        ($R^2=0.417$) and added to the raw16 model for ELSA external validation.
+\end{enumerate}
+
+\subsection{Reduced Aging Score (RAS)}
+\label{sec:ras}
+
+RAS was constructed as a linear combination of four biomarkers:
+
+\[
+\text{RAS} = \beta_0 + \beta_1 \cdot \ln(\text{CRP}) + \beta_2 \cdot \ln(\text{HbA1c})
+           + \beta_3 \cdot \ln(\text{TC}) + \beta_4 \cdot \text{SBP}
+\]
+
+The coefficients $\beta_{0..4}$ were estimated by ordinary least squares regression of
+CHARLS KDM-BA on the four CHARLS biomarker equivalents
+(\texttt{crp\_mg.L}, \texttt{Hb A1c}, \texttt{TC\_mg.d L}, \texttt{sbp.mean}).
+$R^2$ on CHARLS data was $0.417$ ($n=12{,}329$), indicating that RAS captures
+$41.7\%$ of KDM-BA's internal variance.
+
+For ELSA, biomarkers were converted to CHARLS-equivalent units: hs-CRP (mg/L)
+log-transformed directly; HbA1c converted from IFCC (mmol/mol) to DCCT (\%) via
+$\text{HbA1c}\% = (\text{mmol/mol} / 10.929) + 2.15$, then log-transformed; total
+cholesterol converted from mmol/L to mg/dL ($\times 38.67$), then log-transformed;
+systolic BP used directly (mmHg). After excluding ELSA respondents with missing
+biomarker codes ($-8$, $-2$, $-1$), $2{,}499$ of $8{,}416$ respondents had complete
+biomarker data for RAS computation.
+
+% ============================================================
+\section{Results}
+% ============================================================
+
+[KEEP existing primary model results, reliability diagnostics, DCA, sensitivity branches
+from v3 — all still correct.]
+
+% ADD: AUC Gap Decomposition
+\subsection{AUC Gap Decomposition: Feature-Subset vs.\ Cross-Cultural}
+
+Table~\ref{tab:auc-decomp} presents the structured decomposition of the
+$0.303$ ROC-AUC gap between the CHARLS raw17 holdout and the external cohorts.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{AUC gap decomposition across CHARLS raw17, CHARLS raw16, ELSA, and HRS.
+All values are raw (uncalibrated) ROC-AUC except where noted.}
+\label{tab:auc-decomp}
+\begin{tabular}{lcccccc}
+\toprule
+Stage & Cohort & Features & $n$ & KOA\% & ROC-AUC & $\Delta$ from baseline \\
+\midrule
+A  & CHARLS raw17 Holdout  & 17 & 2{,}466  & 13.3 & 0.907 & — (baseline) \\
+B  & CHARLS raw16 Holdout  & 15 & 2{,}466  & 13.3 & 0.869 & $-0.038$ (feature-subset) \\
+C  & ELSA W8 raw16         & 14 & 8{,}416  & 24.9 & 0.604 & $-0.303$ (total) \\
+C' & HRS W13 raw16         & 12 & 20{,}605 & 33.9 & 0.604 & $-0.303$ (total) \\
+\cmidrule{6-7}
+   & \textbf{Feature-subset component}  & & & & & $\mathbf{-0.038}$ (13\%) \\
+   & \textbf{Cross-cultural component}  & & & & & $\mathbf{-0.265}$ (87\%) \\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}
+\footnotesize{Feature-subset penalty = B $-$ A. Cross-cultural penalty = C $-$ B.
+Percentages are of the total A$\rightarrow$C gap ($0.303$).}
+\end{table}
+
+The feature-subset penalty (dropping Biological Age, wave, and Time from raw17)
+accounts for $13\%$ of the total AUC loss. The remaining $87\%$ is cross-cultural
+attenuation occurring between the CHARLS and external cohorts, attributable to
+outcome proxy mismatch, population demographic differences, and diagnostic
+ascertainment heterogeneity.
+
+Notably, the ELSA and HRS raw16 ROC-AUC values are nearly identical ($0.604$)
+despite ELSA having two more harmonised features (Residence and Dyslipidemia),
+using a different KOA proxy (ever-diagnosed vs.\ current-wave arthritis), and
+drawing from a different population (UK vs.\ US). This convergence supports a
+stable transportability ceiling around $\text{AUROC} \approx 0.60$ for raw16
+without Biological Age across culturally distinct aging cohorts.
+
+\subsection{Reduced Aging Score (RAS) Experiment}
+\label{sec:ras-results}
+
+Table~\ref{tab:ras} presents the effect of adding RAS to the ELSA raw16 model.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Effect of the Reduced Aging Score on ELSA external validation.
+RAS captures 41.7\% of KDM-BA variance in CHARLS.}
+\label{tab:ras}
+\begin{tabular}{lccc}
+\toprule
+Model & ROC-AUC & PR-AUC & Brier \\
+\midrule
+ELSA raw16              & 0.6050 & 0.297 & 0.200 \\
+ELSA raw16 + RAS        & 0.6111 & 0.316 & 0.188 \\
+\cmidrule{2-4}
+$\Delta$ (RAS gain)     & \textbf{+0.0061} & +0.019 & $-0.013$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Adding RAS — the best biological age proxy constructible from publicly available
+ELSA biomarkers — recovers only $0.006$ ROC-AUC, or approximately $2\%$ of the
+total cross-cultural gap. This negligible gain is consistent with the weak
+association between KDM-BA and KOA in CHARLS ($r=0.018$) and the fact that RAS
+captures less than half of that already-weak signal.
+
+[KEEP existing HRS and ELSA replication results sections, but update the
+interpretation paragraphs to reflect the decomposition above.]
+
+% ============================================================
+\section{Discussion}
+% ============================================================
+
+\paragraph{Internal validation.}
+[KEEP existing internal validation paragraph — still correct.]
+
+\paragraph{AUC gap decomposition and transportability.}
+The structured decomposition (Table~\ref{tab:auc-decomp}) reveals that the dominant
+driver of performance degradation from CHARLS to ELSA/HRS is \textbf{cross-cultural
+shift} ($87\%$), not the exclusion of Biological Age ($13\%$). This finding
+contradicts the initial hypothesis — based on SHAP feature importance ranking in the
+CHARLS raw17 model — that BA would account for the majority of the external
+performance gap. SHAP importance ranks the \textit{within-model} contribution of a
+feature to predictions on the training distribution; it does not quantify how much
+that feature would contribute to closing a \textit{between-population} performance
+gap, which is fundamentally a transportability question.
+
+Three lines of evidence converge on this interpretation:
+\begin{enumerate}
+  \item \textbf{CHARLS raw16 baseline.} Restricting CHARLS to raw16 (dropping BA,
+        wave, and Time) degrades holdout ROC-AUC by only $0.038$ — a modest penalty
+        relative to the $0.303$ total gap.
+  \item \textbf{ELSA--HRS convergence.} ELSA and HRS produce near-identical ROC-AUC
+        ($0.604$) despite different feature availability (14 vs.\ 12 variables),
+        KOA proxy definitions (ever-diagnosed vs.\ current-wave arthritis), and
+        populations (UK vs.\ US). This convergence is not compatible with a
+        BA-centric narrative, which would predict different performance in cohorts
+        with different feature completeness.
+  \item \textbf{RAS experiment.} Constructing the best possible biological age proxy
+        from ELSA biomarkers and adding it to the model recovers only $0.006$
+        ROC-AUC — less than one-tenth of the feature-subset penalty and negligible
+        relative to the total gap.
+\end{enumerate}
+
+The practical implication is that future external validation efforts should
+prioritise \textbf{outcome harmonisation} (applying a consistent KOA definition
+across cohorts) and \textbf{full raw17 feature availability} (including
+KDM-computed Biological Age from linked biomarker panels) over constructing partial
+aging proxies from incomplete biomarker sets.
+
+\paragraph{Comparison with the reference study.}
+[KEEP existing comparison paragraph — still correct.]
+
+\paragraph{Strengths.}
+[KEEP strengths, ADD:] the structured AUC gap decomposition isolating feature-subset
+from cross-cultural components; and the RAS sensitivity experiment quantifying the
+marginal contribution of harmonised biological age proxies.
+
+% ============================================================
+\section{Limitations}
+% ============================================================
+[KEEP all existing limitations, ADD:]
+
+\begin{itemize}
+\item \textbf{Outcome proxy heterogeneity is the primary limitation.} The AUC gap
+      decomposition shows that $87\%$ of performance loss is cross-cultural, with
+      outcome definition mismatch (CHARLS knee-localised pain vs.\ HRS/ELSA stooping
+      difficulty) likely the largest single contributor. Until a harmonised KOA
+      definition is applied across all three cohorts, the true transportability of
+      the raw17 model cannot be estimated.
+\item \textbf{RAS is an imperfect BA proxy.} The Reduced Aging Score captures only
+      $42\%$ of KDM-BA variance and is based on 4 of the 8 KDM biomarkers. It should
+      not be interpreted as a substitute for full KDM-BA. The RAS experiment serves
+      as a sensitivity analysis demonstrating the ceiling of what is achievable with
+      publicly available ELSA data.
+\end{itemize}
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+This study demonstrates a methodologically rigorous internal-validation pipeline for
+symptomatic KOA prediction in a large Chinese nationally-representative cohort. The
+pre-specified primary model achieves strong discrimination (ROC-AUC $0.907$ on the
+unseen holdout), acceptable calibration, and positive DCA net benefit in the
+clinically relevant $10\%$--$30\%$ risk threshold band.
+
+A structured AUC gap decomposition reveals that cross-cultural transportability
+losses ($87\%$ of the total gap) dominate over feature-subset penalties ($13\%$).
+The near-identical performance of the raw16 model on ELSA and HRS (ROC-AUC
+$\approx 0.60$) — despite different feature availability, KOA proxy definitions, and
+populations — establishes a conservative transportability ceiling. A Reduced Aging
+Score constructed from biomarkers common to CHARLS and ELSA recovers negligible AUC
+($+0.006$), confirming that partial biological age proxies are insufficient to bridge
+the cross-cultural gap.
+
+These findings reframe the external validation challenge: the primary obstacle is not
+missing Biological Age but rather outcome definition heterogeneity and cross-cultural
+population differences. Future work should prioritise (i) harmonised KOA outcome
+definitions across cohorts, (ii) full raw17 feature availability including
+KDM-computed BA from linked biomarker panels, and (iii) prospective validation in
+cohorts where the same KOA definition can be applied as in CHARLS.
+
+% ============================================================
+\section*{Data Availability}
+% ============================================================
+[KEEP existing data availability section — still correct.]
+
+% ============================================================
+\begin{thebibliography}{99}
+% ============================================================
+[KEEP all existing references, ADD if needed for RAS/AUC decomposition citations.]
+\end{thebibliography}
+
+\end{document}

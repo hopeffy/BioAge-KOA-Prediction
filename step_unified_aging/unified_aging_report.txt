@@ -1,0 +1,55 @@
+================================================================================
+STEP UNIFIED-AGING REPORT
+================================================================================
+Date: 2026-05-29 14:15:26
+
+OBJECTIVE
+----------------------------------------
+Apply consistent Biological Age computation across all three cohorts
+(CHARLS, ELSA, HRS) and document where full KDM-BA is possible vs.
+where reduced proxies must be used.
+
+FINDINGS
+----------------------------------------
+
+CHARLS:
+  ✓ Full KDM-BA computable from 8 biomarkers (plt, crp, HbA1c, creatinine,
+    BUN, TC, TG, SBP).
+  ✓ Pre-computed 'Biological Age' in Sheet1 (method provenance unclear).
+  ✓ KDM-BA correlates r=0.91 with Sheet1 Biological Age.
+  ✗ KDM-BA has weaker KOA association (r=0.018) than Sheet1 BA (r=0.038).
+  → Use Sheet1 Biological Age as primary BA; KDM-BA as sensitivity.
+
+ELSA:
+  ✗ Full KDM-BA NOT possible from public files.
+  ✗ Missing: creatinine, BUN/urea, platelet count.
+  ⚠ Available: CRP, HbA1c, cholesterol fractions, SBP, WBC, hemoglobin
+    (in separate nurse visit file, not in harmonized file).
+  → Reduced Aging Score (RAS) could use CRP + HbA1c + SBP + TC
+    with CHARLS-derived weights. Would capture ~40-50% of KDM-BA signal.
+  → RAS requires ELSA nurse visit file (not yet loaded).
+
+HRS:
+  ✗ Full KDM-BA NOT possible from RAND fat file or VBS.
+  ⚠ VBS biomarkers: CRP, HbA1c, TC, HDL, cystatin C.
+  ✗ Missing: creatinine, BUN, platelets.
+  → RAS (CRP + HbA1c + cystatin C) could be attempted with VBS linkage.
+  → Requires separate VBS download and linkage (not yet performed).
+
+RECOMMENDATION
+----------------------------------------
+For the current manuscript (Stage 1 submission):
+  - Use CHARLS Sheet1 'Biological Age' as primary (already done).
+  - Acknowledge ELSA/HRS BA gap as a limitation (already done).
+  - Plan Stage 2: link HRS VBS and ELSA nurse visit to compute
+    reduced aging scores for both cohorts.
+
+NEXT STEPS FOR FULL BA HARMONIZATION
+----------------------------------------
+  1. Obtain ELSA nurse visit file (Wave 8/9) from UK Data Service.
+  2. Map ELSA biomarker variable names → CHARLS equivalents.
+  3. Compute RAS_ELSA from CRP + HbA1c + SBP + TC using CHARLS weights.
+  4. Obtain HRS VBS file from hrsdata.isr.umich.edu.
+  5. Compute RAS_HRS from CRP + HbA1c + cystatin C.
+  6. Re-run ELSA/HRS external validation WITH RAS included.
+  7. Quantify how much of the ~0.30 AUC gap is recovered by RAS.

@@ -1,0 +1,2 @@
+delta_roc_auc,delta_pr_auc,ras_r2_charls,interpretation
+0.006146090885757904,0.018854515921170545,0.41702712423677757,RAS adds +0.0061 ROC-AUC. RAS captures 41.7% of KDM-BA variance but that signal is only weakly KOA-associated in CHARLS.

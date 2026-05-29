@@ -1,0 +1,49 @@
+================================================================================
+STEP ELSA-RAS REPORT
+================================================================================
+Date: 2026-05-29 21:46:39
+
+OBJECTIVE
+----------------------------------------
+Compute a Reduced Aging Score (RAS) from biomarkers available in both
+CHARLS and ELSA (CRP, HbA1c, SBP, TC), then add it to the raw16 model
+to quantify how much of the cross-cultural AUC gap is recoverable.
+
+RAS METHOD
+----------------------------------------
+  CHARLS biomarkers: crp_mg.L (log CRP), Hb A1c (log HbA1c),
+                      TC_mg.d L (log TC), sbp.mean (SBP mmHg)
+  ELSA biomarkers:   hscrp→log(CRP), hba1c→log(HbA1c%),
+                      chol→log(TC mg/dL), sysval (SBP mmHg)
+  RAS R² on CHARLS KDM-BA: 0.4170
+    → RAS captures 41.7% of KDM-BA's statistical signal
+
+RESULTS
+----------------------------------------
+  ELSA raw16:           ROC-AUC = 0.6050
+  ELSA raw16 + RAS:     ROC-AUC = 0.6111
+  Δ (RAS contribution):           +0.0061
+
+INTERPRETATION
+----------------------------------------
+  RAS adds +0.0061 ROC-AUC — a marginal improvement consistent
+  with the weak KOA association of KDM-BA in CHARLS.
+
+IMPLICATIONS FOR THE MANUSCRIPT
+----------------------------------------
+  1. The dominant driver of the AUC gap (CHARLS raw16→ELSA) is
+     cross-cultural shift, not missing Biological Age.
+  2. Even if full KDM-BA were available for ELSA, the AUC recovery
+     would likely be modest given BA's weak KOA association.
+  3. The manuscript's claim that BA accounts for 'the majority' of
+     the ROC-AUC gap should be revised.
+  4. Outcome proxy heterogeneity and cross-cultural population
+     differences are the primary performance degraders.
+
+OUTPUT FILES
+----------------------------------------
+  /home/mehmet-bulut/Desktop/Study/4bahar/bioinformatics/BioAge-KOA-Prediction/step_elsa_ras/
+    elsa_ras_cohort.csv
+    elsa_ras_metrics.csv
+    elsa_ras_comparison.csv
+    elsa_ras_report.txt  (this file)

@@ -1,0 +1,6 @@
+cohort,aging_clock,n,mean,std,corr_with_KOA,corr_with_chron_age,biomarkers_used,notes,corr_with_BA
+CHARLS,Biological_Age (Sheet1),12329,58.69889907251395,9.786058180332045,0.038318223765567996,0.7121432856850745,8 (from Sheet1),Pre-computed in CHARLS Sheet1; method unknown,
+CHARLS,KDM_BA_log,12329,58.698899072513946,10.76077496093855,0.01820981695375036,,"8 (plt, crp, HbA1c, creatinine, BUN, TC, TG, SBP)",Klemera-Doubal Method (step_03),0.9094194624323322
+ELSA,KDM_BA,0,,,,,"NOT AVAILABLE (missing creatinine, BUN, platelets)",ELSA nurse visit lacks creatinine/BUN/platelets. KDM-BA impossible from public files.,
+ELSA,RAS (Reduced Aging Score),0,,,,,POTENTIAL: CRP + HbA1c + SBP + TC (4/8 KDM markers),Requires ELSA nurse visit file. CHARLS-trained weights. Would capture ~50% of KDM-BA signal.,
+HRS,KDM_BA,0,,,,,NOT AVAILABLE (requires VBS linkage),"HRS VBS has CRP, HbA1c, TC, HDL, cystatin C. Missing creatinine, BUN, platelets.",

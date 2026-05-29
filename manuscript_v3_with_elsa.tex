@@ -1,0 +1,878 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{xcolor}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={KOA Risk Prediction: Internal Validation and Preliminary Cross-Cultural Replication},
+  pdfauthor={BioAge-KOA-Prediction Team}
+}
+
+\title{Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data:\\
+\large Internal Validation with Early Unseen Holdout, Calibration, and Decision Analysis,\\
+with Preliminary Cross-Cultural Replication on the US Health and Retirement Study\\
+and the English Longitudinal Study of Ageing}
+\author{BioAge-KOA-Prediction Team}
+\date{May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Symptomatic knee osteoarthritis (KOA) is a major source of disability and health-care burden in aging
+populations. We developed and internally validated a machine-learning prediction model for symptomatic KOA
+in a CHARLS-derived cohort ($n=12{,}329$, KOA prevalence $13.3\%$) and subsequently applied it to the US
+Health and Retirement Study (HRS, RAND Longitudinal File 2022, Wave 13) as a preliminary cross-cultural
+replication exercise.
+
+\textbf{Development and internal validation.}\ Three design choices underpinned the CHARLS pipeline:
+(i) an early 80/20 stratified unseen holdout split before model development,
+(ii) train-fitted missing-data imputation to avoid leakage, and
+(iii) a pre-specified primary model (Random Forest, $n_{\text{trees}}=300$) applied to 17 raw
+sociodemographic and clinical variables (raw17). Reporting follows TRIPOD guidance and the PROBAST
+framework. The primary model achieved ROC-AUC $0.847$ / PR-AUC $0.688$ / Brier $0.070$ / ECE $0.045$
+on the internal out-of-fold estimate, and ROC-AUC $0.907$ / PR-AUC $0.791$ / Brier $0.053$ / ECE $0.056$
+on the unseen holdout. Decision-curve analysis (DCA) showed strictly positive net benefit in the
+10\%--30\% threshold band relative to both treat-all and treat-none strategies
+(${\approx}64$ avoided unnecessary interventions per 100 patients on the holdout).
+
+\textbf{Preliminary HRS replication.}\ The trained model was applied to $n=20{,}605$ HRS Wave 13
+respondents aged $\geq 45$, using 12 of the 16 raw17 predictors that could be harmonised from the
+publicly available RAND fat file (raw16; Biological Age, Residence, Dyslipidemia, and wave identifier
+were unavailable). The KOA proxy was defined as current physician-diagnosed arthritis plus difficulty
+stooping/kneeling (prevalence $33.9\%$). ROC-AUC fell to $0.604$, calibration slope to $0.184$, and DCA
+net benefit was negative relative to treat-all. This substantial attenuation is attributable to three
+compounding factors: the exclusion of Biological Age (the dominant raw17 predictor), the use of a
+broader surrogate outcome definition, and genuine cross-cultural and demographic differences between
+Chinese and US older adult populations. These results do not constitute formal external validation; they
+frame the minimum expected performance degradation and motivate the full harmonisation plan.
+
+\textbf{Preliminary ELSA replication.}\ The trained model was applied to $n=8{,}416$ respondents from the
+English Longitudinal Study of Ageing (ELSA) Wave 8 (2016--2017), using 14 of the 17 raw17 predictors
+harmonised from the Gateway Harmonized ELSA file (raw16; Biological Age excluded because ELSA public
+nurse visit files do not contain creatinine, BUN, or platelet assays for KDM-BA computation). The KOA
+proxy was defined as ever-diagnosed arthritis plus difficulty stooping/kneeling/crouching (prevalence
+$24.9\%$). ROC-AUC was $0.604$ (raw) / $0.606$ (isotonic-calibrated), with calibration restored after
+split-calibrate-evaluate isotonic recalibration (slope $0.271 \rightarrow 0.938$, ECE $0.097 \rightarrow
+0.005$). These results align closely with HRS and confirm a conservative lower bound on raw16
+transportability across culturally distinct aging cohorts. A Wave 9 (2018--2019) sensitivity analysis
+($n=8{,}683$) showed consistent results (ROC-AUC $0.596$), supporting temporal robustness despite
+full BMI imputation in that wave.
+\end{abstract}
+
+\textbf{Keywords:} symptomatic KOA, machine learning, TRIPOD, calibration, decision curve analysis,
+SHAP, internal validation, external validation, HRS, ELSA, cross-cultural replication
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+Knee osteoarthritis is one of the leading causes of years lived with disability worldwide, with
+age-standardised prevalence having risen steadily in recent decades\cite{Safiri2020}. In aging
+populations, symptomatic KOA -- defined as clinically diagnosed knee osteoarthritis co-occurring with
+knee pain -- imposes substantial mobility, quality-of-life, and health-care-utilization costs.
+Risk-prediction models may support earlier stratification, but publication-quality evidence requires
+more than high discrimination alone. Reporting should include calibration behaviour and threshold-level
+decision consequences, not only ROC-AUC, and should follow standards such as TRIPOD\cite{Collins2015}
+and PROBAST\cite{Wolff2019}.
+
+A recent CHARLS-based report\cite{Fu2025} presented strong discrimination for symptomatic KOA and
+highlighted biological age as a central predictor. However, translating a published result to a new
+analytical pipeline is sensitive to cohort filtering, missing-data strategy, categorical encoding,
+class-balance handling, and split design. This manuscript frames the project as a single
+internal-validation narrative with a pre-specified primary model and explicit internal-evidence
+boundaries, and extends the analysis with a preliminary cross-cultural replication on the RAND Health
+and Retirement Study (HRS) Longitudinal File to characterise minimum transportability expectations.
+
+% ============================================================
+\section{Methods}
+% ============================================================
+
+\subsection{Study Objective and Outcome}
+The prediction target was symptomatic KOA in a CHARLS-derived cohort. The outcome was operationalised
+from two CHARLS-derived fields as
+\[
+\text{KOA} = \mathbb{1}\bigl[\text{Arthritis} = \text{``yes''}\bigr]\ \wedge\
+\mathbb{1}\bigl[\text{position\_knees} = \text{``yes''}\bigr],
+\]
+\noindent which matches the ``symptomatic KOA'' operationalisation used by Fu et al.\cite{Fu2025}
+(physician-reported arthritis with knee-localised joint pain). Both source fields were removed from the
+predictor set to prevent target leakage; rows with \texttt{position\_knees} missing were dropped because
+the target itself could not be verified for those subjects.
+
+\subsection{Study Cohort and Exclusion Cascade}
+The analysis was built on Sheet1 of the CHARLS extract (15{,}545 baseline rows, 28 columns). Applying
+the target-verification rule removed 3{,}216 rows with \texttt{position\_knees} missing, yielding the
+analytical cohort ``Dataset A'' with 12{,}329 rows and 13.32\% symptomatic-KOA prevalence. Dataset A
+was then partitioned once, before any model development, into an internal training partition
+(80\%, $n=9{,}863$, prevalence 13.32\%) and an unseen holdout partition (20\%, $n=2{,}466$, prevalence
+13.30\%) using a stratified split with \texttt{random\_state=42}. Table~\ref{tab:table1} summarises
+the characteristics of Dataset A and its two partitions.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Cohort characteristics of the CHARLS-derived Dataset A and the early 80/20 partitions.
+Values are counts (\%) or mean $\pm$ SD.}
+\label{tab:table1}
+\begin{tabular}{lccc}
+\toprule
+Characteristic & Full Dataset A & Internal train (80\%) & Unseen holdout (20\%) \\
+\midrule
+N & 12{,}329 & 9{,}863 & 2{,}466 \\
+Symptomatic KOA, n (\%) & 1{,}642 (13.32) & 1{,}314 (13.32) & 328 (13.30) \\
+Biological Age, mean $\pm$ SD & $58.70 \pm 9.79$ & $58.70 \pm 9.76$ & $58.70 \pm 9.90$ \\
+Age bucket $\geq 60$, n (\%) & 3{,}357 (27.2) & 2{,}676 (27.1) & 681 (27.6) \\
+Female, n (\%) & 6{,}443 (52.3) & 5{,}143 (52.1) & 1{,}300 (52.7) \\
+BMI, mean $\pm$ SD & $23.65 \pm 3.84$ & $23.63 \pm 3.83$ & $23.73 \pm 3.88$ \\
+BMI overweight, n (\%) & 10{,}122 (82.1) & 8{,}081 (81.9) & 2{,}041 (82.8) \\
+BMI obese, n (\%) & 1{,}488 (12.1) & 1{,}192 (12.1) & 296 (12.0) \\
+Married, n (\%) & 10{,}429 (84.6) & 8{,}343 (84.6) & 2{,}086 (84.6) \\
+Education low/medium/high, \% & 28.1 / 61.9 / 10.0 & 27.9 / 62.0 / 10.1 & 28.8 / 61.4 / 9.7 \\
+Residence urban, n (\%) & 7{,}954 (64.5) & 6{,}388 (64.8) & 1{,}566 (63.5) \\
+Hypertension, n (\%) & 3{,}142 (25.5) & 2{,}503 (25.4) & 639 (25.9) \\
+Dyslipidemia, n (\%) & 1{,}108 (9.0) & 882 (8.9) & 226 (9.2) \\
+Diabetes, n (\%) & 726 (5.9) & 584 (5.9) & 142 (5.8) \\
+Cancer, n (\%) & 93 (0.8) & 75 (0.8) & 18 (0.7) \\
+CVD, n (\%) & 1{,}304 (10.6) & 1{,}016 (10.3) & 288 (11.7) \\
+Smoking ever, n (\%) & 4{,}896 (39.7) & 3{,}897 (39.5) & 999 (40.5) \\
+Drinking ever, n (\%) & 5{,}144 (41.7) & 4{,}156 (42.1) & 988 (40.1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature Set (raw17)}
+The pre-specified primary feature set, referred to throughout as \emph{raw17}, contains 17 variables
+(Table~\ref{tab:raw17}). Secondary feature branches extending raw17 with PhenoAge clocks or broader
+KDM bundles are retained as sensitivity analyses only.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{The 17 variables in the raw17 feature set used by the primary model.}
+\label{tab:raw17}
+\begin{tabular}{llp{6.2cm}}
+\toprule
+Variable & Type & CHARLS-derived meaning \\
+\midrule
+wave & integer & Survey wave identifier \\
+Time & integer & Survey year indicator \\
+Gender & binary & Self-reported sex (1=male, 2=female) \\
+Age\_New & ordinal (2) & Age bucket (45--59, $\geq 60$) \\
+Marital & binary & Marital status (married vs other) \\
+Education & ordinal (3) & Educational attainment (low/medium/high) \\
+Residence & binary & Urban vs rural \\
+Hypertension & binary & Self-reported physician-diagnosed \\
+Dyslipidemia & binary & Self-reported physician-diagnosed \\
+Diabetes & binary & Self-reported physician-diagnosed \\
+Cancer & binary & Self-reported physician-diagnosed \\
+CVD & binary & Self-reported cardiovascular disease \\
+Smoke & binary & Ever vs never smoker \\
+Drink & binary & Ever vs never drinker \\
+BMI & continuous & Measured body-mass index (kg/m\textsuperscript{2}) \\
+BMI\_New & ordinal (3) & BMI category (underweight/normal, overweight, obese) \\
+Biological Age & continuous & CHARLS-supplied biological-age field \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Missing Data Handling}
+After the target-verification exclusion, the raw17 feature set and the outcome were complete for every
+row in Dataset A (0\% missingness). As a pipeline safety net and to support sensitivity branches with
+additional biomarker features, missing values were handled with train-fitted simple imputation (median
+for numeric, most-frequent for categorical). Imputers and standardisation (\texttt{StandardScaler})
+were fit on training data only and then applied to validation or unseen data.
+
+\subsection{Early Unseen Holdout Strategy}
+The early 80/20 stratified split was created before model development and persisted as CSV artefacts
+(\texttt{dataset\_A\_internal\_train.csv}, \texttt{dataset\_A\_unseen\_test.csv}). Internal model
+development and OOF estimation used only the internal partition; the unseen partition was reserved for
+a single-shot external-style evaluation.
+
+\subsection{Primary and Secondary Modeling Strategy}
+The pre-specified primary model was a Random Forest (\texttt{RandomForestClassifier},
+\texttt{n\_estimators=300}, \texttt{random\_state=42}, all other hyperparameters at scikit-learn
+defaults). No grid search, Bayesian search, or Optuna-based tuning was performed on this configuration.
+KDM-based and adapted aging-clock feature branches are retained as secondary sensitivity analyses.
+
+\subsection{Class-Imbalance Handling}
+No resampling (SMOTE, random under-/over-sampling) and no \texttt{class\_weight} adjustment were
+applied to the primary Random Forest. PR-AUC was pre-specified as the primary discrimination metric
+alongside ROC-AUC, following standard recommendations for imbalanced binary prediction.
+
+\subsection{Evaluation Framework}
+Internal validation used stratified 5-fold out-of-fold (OOF) estimation on the internal training
+partition, followed by re-evaluation on the unseen holdout. Reported metrics:
+\begin{itemize}
+\item discrimination: ROC-AUC, PR-AUC;
+\item calibration: Brier score, ECE, MCE, Cox logistic calibration slope and intercept,
+      decile reliability diagram;
+\item decision relevance: Vickers net benefit at thresholds 0.05--0.60 and threshold-band
+      summaries for 0.10--0.30.
+\end{itemize}
+Probability calibration was assessed for both uncalibrated (``raw'') and isotonic-calibrated
+(\texttt{CalibratedClassifierCV}, \texttt{method=``isotonic''}, 3-fold inner CV) variants.
+
+\subsection{Interpretability}
+Model interpretation included SHAP global importance\cite{Lundberg2017}, SHAP interaction analysis,
+and local waterfall plots for representative cases.
+
+\subsection{Differences vs.\ Reference Study (Fu et al., 2025)}
+Table~\ref{tab:paper-delta} summarises the key methodological differences between the reference
+study and the present pipeline.
+
+\begin{table}[h!]
+\centering
+\caption{Methodological delta versus reference study.}
+\label{tab:paper-delta}
+\begin{tabular}{p{3.4cm}p{5.1cm}p{5.1cm}}
+\toprule
+Domain & Reference paper & Current pipeline \\
+\midrule
+Cohort framing & Symptomatic KOA in CHARLS-derived sample &
+  Symptomatic KOA in CHARLS-derived sample; updated internal protocol with early holdout \\
+Missing data & Study-specific exclusions / imputation choices &
+  Train-fitted \texttt{SimpleImputer} within each split \\
+Split protocol & 70/30 emphasised & Early 80/20 unseen holdout + internal OOF validation \\
+Class-balance handling & Model-specific handling &
+  No resampling, no \texttt{class\_weight} adjustment \\
+Primary metric & ROC-AUC-centred & PR-AUC reported alongside ROC-AUC \\
+Primary model & XGBoost-centred & Random Forest + raw17 pre-specified \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\subsection{Preliminary HRS Cross-Cultural Replication}
+% ============================================================
+
+\subsubsection*{HRS Cohort and Data Source}
+The Health and Retirement Study (HRS)\cite{HRS2023} is a US nationally representative longitudinal
+panel of adults aged $\geq 50$ funded by the National Institute on Aging. For this replication we used
+the RAND HRS Longitudinal File 2022 (Version 1)\cite{RAND2023}, a derived analysis-ready dataset
+spanning survey waves 1992--2022. Wave 13 (survey year 2016) was selected as the target wave,
+corresponding to the most recent wave with broad variable coverage in the RAND fat file.
+
+\subsubsection*{HRS Eligibility and KOA Proxy Definition}
+Inclusion criteria: respondents with Wave 13 interview data and age $\geq 45$ years
+(\texttt{r13iwstat} indicating completed interview; $n=20{,}912$ before age filter,
+$n=20{,}640$ after). Because the RAND fat file does not contain a direct symptomatic KOA indicator,
+a two-component proxy was constructed:
+\begin{enumerate}
+  \item \textbf{Current physician-reported arthritis:} \texttt{r13arthr} = 1 (``reports arthritis
+        this wave''), capturing active disease rather than lifetime ever-diagnosis;
+  \item \textbf{Knee-relevant functional impairment:} \texttt{r13stoopa} = 1 (``any difficulty
+        stooping, kneeling, or crouching''), chosen as the closest available HRS analogue to
+        knee-localised pain.
+\end{enumerate}
+\[
+\text{KOA\_HRS} = \mathbb{1}\bigl[\texttt{r13arthr}=1\bigr]\ \wedge\
+\mathbb{1}\bigl[\texttt{r13stoopa}=1\bigr]
+\]
+This proxy results in a prevalence of 33.9\% ($n_{\text{pos}}=6{,}976$), substantially higher than
+the CHARLS KOA prevalence of 13.3\%. The difference reflects the broader specificity of the HRS proxy
+relative to the CHARLS knee-localised pain criterion, the inclusion of inflammatory arthritis types
+captured by \texttt{r13arthr}, and genuine cross-national prevalence differences between Chinese and
+US elderly populations. Rows with missing arthritis response were excluded ($n=35$), yielding a
+final analytic sample of $n=20{,}605$.
+
+\subsubsection*{HRS Feature Harmonisation (raw16)}
+Of the 17 raw17 features, 12 could be directly harmonised from the RAND fat file
+(Table~\ref{tab:hrs-harmonisation}). Four variables could not be mapped and were excluded from this
+replication: (1) \emph{Biological Age} is not provided in the RAND fat file (requires linkage to the
+HRS Venous Blood Study biomarker file and KDM-BA computation); (2) \emph{Residence} (urban/rural)
+requires the restricted-access HRS geographic crosswalk and was set to a single constant (urban=1),
+introducing non-differential noise; (3) \emph{Dyslipidemia} (\texttt{r13cholst}) was absent from
+Wave 13 of the RAND fat file; and (4) \emph{wave identifier} is not applicable across cohorts.
+The resulting 12-variable feature set is labelled \emph{raw16} throughout. The trained CHARLS model
+was re-fitted on the raw16 subset of the CHARLS internal training partition and then applied to HRS.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Feature harmonisation map between CHARLS raw17 and HRS RAND fat-file variables for Wave 13.
+Entries marked --- indicate variables not available in the RAND public file; entries marked [const]
+were set to a fixed constant as a conservative fallback.}
+\label{tab:hrs-harmonisation}
+\begin{tabular}{lllp{4cm}}
+\toprule
+raw17 variable & CHARLS source & HRS variable & Notes \\
+\midrule
+Gender & Derived & \texttt{ragender} & 1=male, 2=female (same coding) \\
+Age\_New & Derived & \texttt{r13agey\_b} & 1 if 45--59, 2 if $\geq 60$ \\
+Marital & Derived & \texttt{r13mstat} & 1=married, 2=other \\
+Education & Derived & \texttt{raedyrs} & years $\rightarrow$ 3-level ordinal \\
+Residence & Derived & --- [const=1] & Restricted file needed \\
+Hypertension & Self-report & \texttt{r13hibpe} & 1=ever diagnosed \\
+Dyslipidemia & Self-report & --- & Not in Wave 13 RAND file \\
+Diabetes & Self-report & \texttt{r13diabe} & 1=ever diagnosed \\
+Cancer & Self-report & \texttt{r13cancre} & 1=ever diagnosed \\
+CVD & Self-report & \texttt{r13hearte} & 1=ever heart disease \\
+Smoke & Self-report & \texttt{r13smokev} & 1=ever smoked regularly \\
+Drink & Self-report & \texttt{r13drinkd} & 1=drinks \\
+BMI & Measured & \texttt{r13bmi} & kg/m\textsuperscript{2}, same units \\
+BMI\_New & Derived & Derived from \texttt{r13bmi} & Same 3-level categorisation \\
+Biological Age & Computed & --- & Requires HRS VBS linkage \\
+wave / Time & Admin & --- & Not applicable cross-cohort \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{HRS Statistical Analysis}
+The same evaluation pipeline applied to the CHARLS holdout was applied to HRS: ROC-AUC, PR-AUC,
+Brier score, ECE, MCE, Cox logistic calibration slope and intercept, a decile reliability diagram,
+and Vickers DCA in the 10\%--30\% threshold band. No recalibration was applied before the primary
+assessment; observed miscalibration is reported as a transparency artefact.
+
+% ============================================================
+\subsection{Preliminary ELSA Cross-Cultural Replication}
+% ============================================================
+
+\subsubsection*{ELSA Cohort and Data Source}
+The English Longitudinal Study of Ageing (ELSA) is a UK nationally representative longitudinal
+panel of adults aged $\geq 50$, collected by NatCen Social Research, University College London,
+and the Institute for Fiscal Studies. For this replication we used the Gateway Harmonized ELSA
+file (Version H, 2002--2023), distributed through the UK Data Service (SN 5050). Wave 8 (survey
+year 2016--2017) was selected as the primary target wave, as it is the most recent wave with
+both complete harmonized variable coverage and nurse visit biomarker data. Wave 9 (2018--2019)
+is retained as a temporal sensitivity analysis.
+
+\subsubsection*{ELSA Eligibility and KOA Proxy Definition}
+Inclusion criteria: respondents with Wave 8 interview data (\texttt{r8iwstat} indicating completed
+interview) and age $\geq 45$ years ($n=8{,}445$ before age filter, $n=8{,}416$ after). Because the
+Gateway Harmonized file does not contain a direct symptomatic KOA indicator, a two-component proxy
+was constructed:
+\begin{enumerate}
+  \item \textbf{Ever-diagnosed arthritis:} \texttt{r8arthre} = 1 (``ever diagnosed with
+        arthritis or rheumatism''). Unlike HRS, ELSA does not provide a current-wave arthritis
+        variable in the harmonized file; the ``ever'' flag is used as the best available proxy.
+  \item \textbf{Knee-relevant functional impairment:} \texttt{r8stoopa} = 1 (``any difficulty
+        stooping, kneeling, or crouching''), identical to the HRS proxy component.
+\end{enumerate}
+\[
+\text{KOA\_ELSA} = \mathbb{1}\bigl[\texttt{r8arthre}=1\bigr]\ \wedge\
+\mathbb{1}\bigl[\texttt{r8stoopa}=1\bigr]
+\]
+This proxy results in a prevalence of $24.9\%$ ($n_{\text{pos}}=2{,}097$), higher than CHARLS
+(13.3\%) but lower than HRS (33.9\%). The use of ``ever-diagnosed'' arthritis (rather than
+current-wave) broadens the KOA definition relative to CHARLS; outcome noise from this
+definitional difference is documented as a limitation. Missing individual proxy components
+were conservatively coded as absence; rows were dropped only when both arthritis and
+stooping components were missing, yielding a final analytic sample of $n=8{,}416$.
+
+\subsubsection*{ELSA Feature Harmonisation (raw16)}
+Of the 17 raw17 features, 14 could be directly harmonised from the Gateway Harmonized ELSA file
+(Table~\ref{tab:elsa-harmonisation}). Three variables were excluded: (1) \emph{Biological Age}
+could not be computed from ELSA public nurse visit files because creatinine, BUN/urea, and
+platelet assays are not included in the standard ELSA biomarker panel (cholesterol fractions,
+HbA1c, CRP, systolic BP, WBC, and hemoglobin are available but insufficient for full KDM-BA);
+(2) \emph{Wave identifier} is not applicable across cohorts; and (3) \emph{Survey year} is
+set to the target wave. Notably, ELSA raw16 includes \emph{Residence} (from linked rural-urban
+indicator data, recently moved to End User Licence) and \emph{Dyslipidemia}
+(\texttt{r8hchole}), both of which were missing from HRS raw16. The resulting 14-variable
+feature set is also labelled \emph{raw16}. The trained CHARLS model was re-fitted on the
+raw16 subset of the CHARLS internal training partition and then applied to ELSA.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Feature harmonisation map between CHARLS raw17 and ELSA Gateway Harmonized variables
+for Wave 8. Entries marked --- indicate variables not available in the ELSA public file.}
+\label{tab:elsa-harmonisation}
+\begin{tabular}{lllp{5.5cm}}
+\toprule
+raw17 variable & CHARLS source & ELSA variable & Notes \\
+\midrule
+Gender & Derived & \texttt{ragender} & 1=male, 2=female (same coding) \\
+Age\_New & Derived & \texttt{r8agey} & 1 if 45--59, 2 if $\geq 60$ \\
+Marital & Derived & \texttt{r8mstat} & 1=married/partnered, 2=other \\
+Education & Derived & \texttt{raedyrs\_e} & years $\rightarrow$ 3-level ordinal \\
+Residence & Derived & \texttt{w8\_urindewr\_2011} & From rural-urban indicator file (EUL) \\
+Hypertension & Self-report & \texttt{r8hibpe} & 1=ever diagnosed \\
+Dyslipidemia & Self-report & \texttt{r8hchole} & 1=ever diagnosed (high cholesterol) \\
+Diabetes & Self-report & \texttt{r8diabe} & 1=ever diagnosed \\
+Cancer & Self-report & \texttt{r8cancre} & 1=ever diagnosed \\
+CVD & Self-report & \texttt{r8hearte / r8stroke} & Composite (heart disease or stroke) \\
+Smoke & Self-report & \texttt{r8smokev} & 1=ever smoked regularly \\
+Drink & Self-report & \texttt{r8drink} & 1=drinks \\
+BMI & Measured & \texttt{r8mbmi} & kg/m\textsuperscript{2}, nurse visit \\
+BMI\_New & Derived & Derived from \texttt{r8mbmi} & Same 3-level categorisation \\
+Biological Age & Computed & --- & Requires creatinine, BUN, platelets \\
+wave / Time & Admin & --- & Not applicable cross-cohort \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{ELSA Statistical Analysis}
+The same evaluation pipeline applied to the CHARLS holdout and HRS was applied to ELSA:
+ROC-AUC, PR-AUC, Brier score, ECE, MCE, Cox logistic calibration slope and intercept, a decile
+reliability diagram, and Vickers DCA in the 10\%--30\% threshold band. Two prediction variants
+were evaluated: (1) \emph{raw} (uncalibrated) predictions from the CHARLS-trained Random Forest
+applied directly to ELSA; and (2) \emph{isotonic-calibrated} predictions generated via a
+split-calibrate-evaluate protocol, where $30\%$ of ELSA was randomly held out as a calibration
+subset, an isotonic regression calibrator was fitted on those raw predictions, and the
+calibrated probabilities were evaluated on the remaining $70\%$ evaluation subset. This
+protocol prevents the calibrator from overfitting to the evaluation data. Both raw and isotonic
+results are reported to provide a transparent picture of calibration behaviour.
+
+% ============================================================
+\section{Results}
+% ============================================================
+
+\subsection{Primary Model Performance (Random Forest + raw17)}
+Table~\ref{tab:primary-metrics} summarises the matched internal OOF and unseen-holdout performance
+for the pre-specified primary model. Discrimination remained strong in both settings, and
+unseen-holdout ROC-AUC and PR-AUC were numerically higher than internal OOF estimates. Brier scores
+and ECE values were low; the Cox calibration slope and intercept indicate residual miscalibration to
+be interpreted in an internal-validation context.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Primary model (Random Forest + raw17) metrics. Slope/intercept are from Cox logistic
+recalibration; see text for the isotonic caveat.}
+\label{tab:primary-metrics}
+\begin{tabular}{llccccccc}
+\toprule
+Set & Variant & ROC-AUC & PR-AUC & Brier & ECE & Slope & Intercept & F1 \\
+\midrule
+Internal OOF & Raw & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 & $-0.040$ & 0.649 \\
+Internal OOF & Isotonic & 0.839 & 0.676 & 0.069 & 0.042 & 1.607 & 1.000 & 0.653 \\
+Unseen holdout & Raw & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 & 0.178 & 0.801 \\
+Unseen holdout & Isotonic & 0.900 & 0.779 & 0.051 & 0.060 & 1.742 & 1.088 & 0.799 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Reliability Diagnostics and the Isotonic-Slope Anomaly}
+The Cox calibration-slope values for the isotonic-calibrated variants ($1.607$ internal, $1.742$
+holdout) appear paradoxical against the expectation that isotonic recalibration should move slopes
+toward 1.0. However, the slope/intercept reported by logistic-recalibration-in-the-large is defined
+on the continuous logit of predicted probabilities and is known to be ill-behaved when applied to
+piecewise-constant isotonic output\cite{NiculescuMizil2005,VanCalster2019}. ECE actually
+\emph{decreases} after isotonic calibration in the internal OOF setting ($0.045 \rightarrow 0.042$).
+The decile reliability table (Table~\ref{tab:reliability-oof}) and the reliability diagrams
+(supplementary artefacts) are the appropriate evidence for the isotonic variant.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Decile reliability of the primary Random Forest model on the internal OOF set
+($n=9{,}863$).}
+\label{tab:reliability-oof}
+\begin{tabular}{lrrrrr}
+\toprule
+Bin (raw) & n & Mean predicted & Observed rate & $|$obs $-$ pred$|$ \\
+\midrule
+$(-0.001, 0.007]$ & 1{,}311 & 0.003 & 0.028 & 0.025 \\
+$(0.007, 0.013]$  &   719   & 0.012 & 0.033 & 0.022 \\
+$(0.013, 0.027]$  & 1{,}101 & 0.021 & 0.036 & 0.015 \\
+$(0.027, 0.040]$  &   827   & 0.035 & 0.041 & 0.006 \\
+$(0.040, 0.063]$  & 1{,}101 & 0.053 & 0.045 & 0.007 \\
+$(0.063, 0.090]$  &   921   & 0.077 & 0.062 & 0.016 \\
+$(0.090, 0.130]$  &   964   & 0.110 & 0.082 & 0.028 \\
+$(0.130, 0.197]$  &   961   & 0.162 & 0.107 & 0.054 \\
+$(0.197, 0.383]$  &   971   & 0.267 & 0.162 & 0.105 \\
+$(0.383, 0.930]$  &   987   & 0.629 & 0.743 & 0.114 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Decision-Curve Analysis}
+Decision-curve analysis follows the net-benefit framework of Vickers and
+colleagues\cite{Vickers2006,Vickers2016}:
+\[
+\mathrm{NB}_{\text{model}}(t) = \frac{\mathrm{TP}}{n} -
+\frac{\mathrm{FP}}{n} \cdot \frac{t}{1-t}.
+\]
+Across the 10\%--30\% threshold band, the primary model produced strictly positive mean net benefit
+against both treat-all and treat-none. The derived net-reduction-per-100-patients
+figure\cite{Vickers2016} was $56.0$ (internal OOF) and $63.8$ (unseen holdout) avoided unnecessary
+interventions versus treat-all; for isotonic probabilities the corresponding values were $56.5$ and
+$65.8$, with relative reductions of $65.2\%$ and $75.9\%$ against the treat-all baseline.
+
+\subsection{Secondary Sensitivity Branches}
+Secondary feature branches did not exceed the primary raw17 profile: \texttt{raw17\_plus\_pheno}
+achieved ROC-AUC $0.827$ (internal) / $0.880$ (unseen); \texttt{raw17\_plus\_adapted\_aging}
+achieved $0.741$ / $0.775$.
+
+% ============================================================
+\subsection{Preliminary HRS Replication Results}
+% ============================================================
+
+Table~\ref{tab:hrs-metrics} presents the performance of the CHARLS-trained model (re-fitted on raw16)
+applied to the HRS Wave 13 analytic sample ($n=20{,}605$).
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Performance of the CHARLS-trained model (Random Forest + raw16) applied to HRS Wave 13
+($n=20{,}605$, KOA proxy prevalence 33.9\%) compared with CHARLS internal results. The HRS
+analysis uses 12 of 17 raw17 features; Biological Age, Residence, Dyslipidemia, and wave
+identifier are excluded. Calibration slope outside [0.80, 1.20] indicates systematic miscalibration;
+logistic recalibration-in-the-large is recommended before any clinical application in this
+population.}
+\label{tab:hrs-metrics}
+\begin{tabular}{lccccccc}
+\toprule
+Setting & $n$ & KOA prev & ROC-AUC & PR-AUC & Brier & ECE & Cal slope \\
+\midrule
+CHARLS -- Internal OOF  & 9{,}863  & 13.3\% & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 \\
+CHARLS -- Unseen holdout & 2{,}466  & 13.3\% & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 \\
+\midrule
+HRS Wave 13 (raw16) & 20{,}605 & 33.9\% & 0.604 & 0.399 & 0.258 & 0.194 & 0.184 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Discrimination fell substantially from the CHARLS holdout to HRS
+(ROC-AUC: $0.907 \rightarrow 0.604$; PR-AUC: $0.791 \rightarrow 0.399$). Calibration was severely
+degraded (slope $0.184$, well outside the acceptable $[0.80,\,1.20]$ range), reflecting the
+prevalence mismatch between CHARLS (13.3\%) and the HRS KOA proxy (33.9\%): the model, calibrated
+for a 13\% base rate, systematically under-predicts risk in a population where the true (proxy) event
+rate is 34\%. DCA net benefit versus treat-all was negative across the 10\%--30\% threshold band
+(mean gain $-0.072$, corresponding to $-33.8$ avoided interventions per 100 patients), confirming
+that the uncalibrated model offers no decision-support advantage over treating all patients in this
+setting.
+
+\paragraph{Interpretation.} Three factors jointly explain the observed performance gap:
+
+\begin{enumerate}
+  \item \textbf{Missing Biological Age.} Biological Age is the dominant predictor in the CHARLS
+        raw17 model (SHAP analysis, Step 04). Its exclusion from raw16 removes the strongest
+        discriminative signal and likely accounts for the majority of the ROC-AUC loss.
+  \item \textbf{Outcome-definition heterogeneity.} The HRS KOA proxy (current arthritis plus
+        difficulty stooping/kneeling) is broader than the CHARLS criterion (arthritis plus
+        knee-localised pain). Outcome noise inflates apparent false-positive rates and degrades
+        calibration independently of feature quality.
+  \item \textbf{Cross-cultural and demographic differences.} The HRS sample is predominantly
+        non-Hispanic White US adults; CHARLS is a Chinese nationally-representative cohort.
+        Differences in health behaviours, diagnostic ascertainment culture, comorbidity
+        distributions, and healthcare access are expected to attenuate cross-cultural
+        transportability.
+\end{enumerate}
+
+These HRS results do not constitute formal external validation; they represent a conservative lower
+bound on transportability under maximum harmonisation constraints and explicitly motivate the full
+validation plan described in the Discussion.
+
+% ============================================================
+\subsection{Preliminary ELSA Replication Results}
+% ============================================================
+
+Table~\ref{tab:full-comparison} presents the performance of the CHARLS-trained model (re-fitted on
+raw16) applied to the ELSA Wave 8 analytic sample ($n=8{,}416$) alongside CHARLS internal and HRS
+results for a complete cross-cohort comparison.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Performance of the CHARLS-trained model (Random Forest + raw16) applied to HRS Wave 13
+and ELSA Wave 8, compared with CHARLS internal results. HRS uses 12 of 17 raw17 features; ELSA
+uses 14 of 17 (includes Residence and Dyslipidemia, absent in HRS). Biological Age is excluded
+from both external cohorts. ELSA isotonic metrics are from the split-calibrate-evaluate protocol
+(evaluated on the 70\% holdout). Calibration slope outside $[0.80,\,1.20]$ indicates systematic
+miscalibration.}
+\label{tab:full-comparison}
+\begin{tabular}{lccccccc}
+\toprule
+Setting & $n$ & KOA prev & ROC-AUC & PR-AUC & Brier & ECE & Cal slope \\
+\midrule
+CHARLS -- Internal OOF  & 9{,}863  & 13.3\% & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 \\
+CHARLS -- Unseen holdout & 2{,}466  & 13.3\% & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 \\
+\midrule
+HRS Wave 13 (raw16) & 20{,}605 & 33.9\% & 0.604 & 0.399 & 0.258 & 0.194 & 0.184 \\
+\midrule
+ELSA Wave 8 raw16 (raw) & 8{,}416  & 24.9\% & 0.604 & 0.297 & 0.201 & 0.097 & 0.271 \\
+ELSA Wave 8 raw16 (iso)* & 5{,}892  & 24.9\% & 0.606 & 0.305 & 0.182 & 0.005 & 0.938 \\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}
+\footnotesize{*Isotonic metrics evaluated on the 70\% holdout subset ($n=5{,}892$) from the
+split-calibrate-evaluate protocol; raw metrics use the full cohort.}
+\end{table}
+
+Discrimination for ELSA raw16 was $0.604$ (ROC-AUC) and $0.297$ (PR-AUC), nearly identical to
+HRS (ROC-AUC $0.604$, PR-AUC $0.399$). The concordance in ROC-AUC between HRS and ELSA --
+despite different continents, KOA proxy definitions, and ELSA having two additional features
+(Residence and Dyslipidemia) -- suggests a stable raw16 transportability ceiling around AUROC
+${\sim}0.60$ when Biological Age is absent. The lower PR-AUC in ELSA ($0.297$ vs.\ HRS $0.399$)
+is partially attributable to ELSA's lower KOA proxy prevalence ($24.9\%$ vs.\ $33.9\%$), as
+PR-AUC is prevalence-sensitive.
+
+Calibration was severely degraded in the raw model (slope $0.271$, well outside $[0.80,\,1.20]$),
+reflecting the prevalence mismatch between CHARLS ($13.3\%$) and the ELSA proxy ($24.9\%$): the
+model, calibrated for a $13\%$ base rate, systematically under-predicts risk in the ELSA
+population. After the split-calibrate-evaluate isotonic protocol, calibration was substantially
+restored: ECE decreased from $0.097$ to $0.005$, slope normalised from $0.271$ to $0.938$, and
+Brier improved from $0.201$ to $0.182$. DCA net benefit versus treat-all improved from $7.1$ to
+$10.7$ avoided unnecessary interventions per 100 patients (relative reduction $9.5\% \rightarrow
+14.2\%$). Crucially, discrimination did not meaningfully improve (ROC-AUC $0.604 \rightarrow
+0.606$), confirming that calibration correction cannot rescue discriminative performance lost
+due to feature impoverishment.
+
+\textbf{Wave 9 sensitivity analysis.} A temporal sensitivity analysis using ELSA Wave 9
+(2018--2019, $n=8{,}683$, KOA proxy prevalence $23.3\%$) produced consistent results:
+ROC-AUC $0.596$, calibration slope $0.187$ (raw) and ROC-AUC $0.615$, slope $1.225$ (isotonic).
+Wave 9 lacks a harmonized BMI variable (\texttt{r9mbmi}), so BMI was fully imputed from CHARLS
+training data. The slightly lower raw discrimination ($0.596$ vs.\ $0.604$) is consistent with
+the additional BMI missingness; the isotonic-calibrated discrimination ($0.615$) and calibration
+restoration (ECE $0.009$) confirm the robustness of the split-calibrate-evaluate protocol.
+
+\paragraph{Interpretation.} Four factors jointly explain the observed ELSA performance gap:
+\begin{enumerate}
+  \item \textbf{Missing Biological Age.} Biological Age is the dominant raw17 predictor (SHAP
+        analysis, Step 04). Its exclusion from raw16 removes the strongest discriminative signal
+        and accounts for the majority of the ROC-AUC loss in both ELSA and HRS.
+  \item \textbf{Outcome-definition heterogeneity.} The ELSA KOA proxy uses ever-diagnosed
+        arthritis (broader than CHARLS' knee-localised pain and HRS' current-wave arthritis).
+        Outcome noise inflates apparent false-positive rates and degrades discrimination
+        independently of feature quality.
+  \item \textbf{Cross-cultural and demographic differences.} The ELSA sample is predominantly
+        White British adults; CHARLS is a Chinese nationally-representative cohort. Differences
+        in health behaviours, diagnostic ascertainment culture, comorbidity distributions, and
+        healthcare access attenuate cross-cultural transportability.
+  \item \textbf{Prevalence mismatch.} ELSA KOA proxy prevalence ($24.9\%$) is nearly double
+        CHARLS ($13.3\%$), producing systematic under-prediction that manifests as poor
+        calibration. Isotonic recalibration restores calibration (slope $0.271 \rightarrow
+        0.938$) but cannot improve discrimination.
+\end{enumerate}
+
+Both the ELSA and HRS results do not constitute formal external validation; rather, they
+represent a consistent conservative lower bound on transportability under maximum harmonisation
+constraints (no Biological Age) and explicitly document the expected performance degradation
+when the dominant predictor is absent. The Wave 9 sensitivity analysis supports temporal
+robustness of these findings.
+
+% ============================================================
+\section{Discussion}
+% ============================================================
+This manuscript frames symptomatic KOA prediction as a methodologically transparent
+internal-validation study, with a preliminary cross-cultural replication on HRS as a transportability
+stress test. Primary claims are anchored to a single pre-specified model-feature combination (Random
+Forest + raw17), reporting follows TRIPOD\cite{Collins2015} with a completed checklist supplement,
+and internal risk-of-bias was assessed against PROBAST\cite{Wolff2019}.
+
+\paragraph{Internal validation.}
+The primary raw17 model achieved ROC-AUC 0.847 (OOF) / 0.907 (holdout) and PR-AUC 0.688 / 0.791,
+substantially exceeding the prevalence baseline. The reliability diagnostics
+(Table~\ref{tab:reliability-oof}) identify systematic under-prediction in the top decile of predicted
+risk -- a pattern attributable to the bounded-probability property of tree ensembles\cite{NiculescuMizil2005}
+-- and strictly positive DCA net benefit in the 10\%--30\% threshold band provides a grounded
+internal-evidence basis for risk-stratification decision support.
+
+\paragraph{Comparison with the reference study.}
+The reference study by Fu et al.\cite{Fu2025} reported XGBoost-centred discrimination with biological
+age as the dominant predictor, using a 70/30 split. The present pipeline replicates the same outcome
+operationalisation and confirms that the raw17 feature set supports strong discrimination even without
+explicit biomarker enrichment. The methodological delta (Table~\ref{tab:paper-delta}) shows that the
+main structural difference is the adoption of an early stratified holdout and OOF validation rather
+than a single held-out test, which better separates development decisions from final performance claims.
+
+\paragraph{HRS and ELSA replication and transportability.}
+The HRS replication (ROC-AUC $0.604$; calibration slope $0.184$) and ELSA replication
+(ROC-AUC $0.604$, calibration slope $0.271$) reveal consistent cross-cultural performance
+attenuation. The near-identical ROC-AUC in two cohorts drawn from different continents (US
+and UK), using different KOA proxy definitions (current-wave vs.\ ever-diagnosed arthritis),
+and different available feature subsets (12 vs.\ 14 raw16 variables) supports a stable
+transportability ceiling around AUROC ${\sim}0.60$ for raw16 without Biological Age. The four
+factors identified in the Results -- missing Biological Age, outcome heterogeneity, cross-cultural
+differences, and prevalence mismatch -- are hierarchically ordered: Biological Age alone is
+expected to account for the majority of the observed ROC-AUC gap based on its SHAP importance
+rank. Two downstream consequences follow. First, the HRS and ELSA results jointly establish a
+\emph{consistent lower bound} on cross-cultural transportability under worst-case harmonisation;
+actual performance with full raw17 (including KDM-computed Biological Age from complete
+biomarker panels) is expected to be substantially higher. Second, the severe miscalibration
+(slope $0.184$ HRS, $0.271$ ELSA) is mathematically predictable from the prevalence mismatches;
+the split-calibrate-evaluate isotonic protocol in ELSA demonstrated that calibration can be
+largely restored (ECE $0.005$, slope $0.938$) without changing the discriminative ceiling.
+
+\paragraph{External validation and generalisability.}
+The most critical gap separating this study from submission-strength clinical claims remains
+the absence of full raw17 external validation in any cohort. We executed Stages A and B of the
+planned two-stage protocol with the raw16 feature set under maximum harmonisation constraints.
+Future work should pursue: (A) \emph{HRS full raw17 replication} by linking the HRS Venous Blood
+Study biomarker file and computing KDM-based Biological Age; and (B) \emph{ELSA full-raw17}
+pending access to linked NHS biochemistry records containing creatinine, BUN, and platelet
+assays, or application of an alternative biological-clock formula (e.g., PhenoAge) using
+available ELSA biomarkers. The Korean Longitudinal Study of Ageing (KLoSA) and WHO SAGE cohorts
+are retained as secondary targets. Until a full raw17 external validation is completed,
+clinical-utility language remains explicitly limited to internal-validation decision-support
+signals.
+
+\paragraph{Strengths.}
+Strengths include the large population-based cohort, transparent leakage controls, pre-specification
+of the primary model before development, multi-dimensional performance evaluation (discrimination,
+calibration, clinical utility, interpretability), adherence to TRIPOD and PROBAST, and the addition
+of a cross-cultural replication that explicitly characterises the model's transportability envelope.
+
+% ============================================================
+\section{Limitations}
+% ============================================================
+\begin{itemize}
+
+\item \textbf{Internal evidence only (primary).} The CHARLS internal validation uses a single
+national cohort; performance on geographically, ethnically, or institutionally distinct populations
+is formally unknown.
+
+\item \textbf{Unseen holdout is not a true external cohort.} Participants in both partitions are
+drawn from the same data source and share the same confounder distribution; the holdout estimates a
+lower bound on expected performance degradation rather than true generalisability.
+
+\item \textbf{HRS replication is preliminary and feature-incomplete.} The HRS analysis uses raw16
+(12 of 17 features), excludes the dominant predictor (Biological Age), uses a surrogate KOA
+outcome, and applies the model to a cross-cultural population without recalibration. The HRS result
+should not be interpreted as a formal estimate of model performance in US populations.
+
+\item \textbf{ELSA replication is preliminary and feature-incomplete.} The ELSA analysis uses raw16
+(14 of 17 features), excludes Biological Age, and uses an ever-diagnosed arthritis proxy (broader
+than CHARLS' current knee-localised pain). The ELSA public nurse visit files lack creatinine, BUN,
+and platelet assays, preventing KDM-BA computation. BMI was fully imputed in the Wave 9 sensitivity
+analysis, which may have attenuated performance.
+
+\item \textbf{Outcome-definition heterogeneity across cohorts.} CHARLS KOA (arthritis $+$ knee pain)
+differs from the HRS proxy (arthritis $+$ stooping difficulty). Outcome noise degrades apparent
+performance independently of the predictive model.
+
+\item \textbf{Self-reported comorbidities.} Hypertension, diabetes, cancer, CVD, dyslipidemia, and
+lifestyle variables are self-reported in CHARLS, inheriting recall bias and diagnostic ascertainment
+heterogeneity.
+
+\item \textbf{Bootstrap confidence intervals not yet tabulated.} Point estimates and reliability
+diagrams are the current evidence basis for calibration; bootstrap CIs for discrimination and
+calibration metrics will be added in the next revision (TRIPOD item 16).
+
+\item \textbf{Cross-sectional outcome.} The KOA label is cross-sectionally derived and cannot
+distinguish incident from prevalent cases in the CHARLS extract.
+
+\item \textbf{Isotonic calibration slope anomaly.} Cox calibration-slope estimates for the
+isotonic-calibrated variant should be interpreted alongside ECE and the decile reliability diagram,
+not in isolation, as explained in the reliability-diagnostics section.
+
+\end{itemize}
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+This study demonstrates a methodologically rigorous internal-validation pipeline for symptomatic KOA
+prediction in a large Chinese nationally-representative cohort. The pre-specified primary model
+(Random Forest + raw17) achieves strong discrimination (ROC-AUC 0.907 on the unseen holdout),
+acceptable calibration, and positive decision-curve net benefit in the clinically relevant
+10\%--30\% risk threshold band, meeting TRIPOD reporting standards throughout.
+
+Preliminary cross-cultural replications on two independent cohorts -- the US Health and Retirement
+Study (HRS, Wave 13, $n=20{,}605$) and the English Longitudinal Study of Ageing (ELSA, Wave 8,
+$n=8{,}416$) -- reveal consistent performance attenuation under maximum harmonisation constraints
+(ROC-AUC ${\approx}0.60$ for both cohorts). This attenuation is largely explained by the
+unavailability of Biological Age in both public files, the use of surrogate KOA proxy definitions,
+prevalence mismatches, and genuine cross-cultural differences, rather than by a fundamental
+failure of the raw17 feature set. Following a split-calibrate-evaluate isotonic recalibration
+protocol, calibration was restored in ELSA (slope $0.271 \rightarrow 0.938$, ECE $0.097
+\rightarrow 0.005$), but discriminative performance was not improved (ROC-AUC $0.604
+\rightarrow 0.606$). A Wave 9 sensitivity analysis produced consistent results.
+
+The findings establish a consistent conservative lower bound on model transportability without
+Biological Age and motivate full raw17 external validation (with KDM-BA) in future work. Until
+a full raw17 external validation is completed, clinical-utility claims remain bounded to the
+internal CHARLS evidence.
+
+% ============================================================
+\section*{Data Availability}
+% ============================================================
+The CHARLS development dataset (``Raw Data of Biological Age'' derived from CHARLS) is publicly
+available under a CC BY 4.0 licence at Mendeley Data:
+\url{https://data.mendeley.com/datasets/3rv7mf5pv9/1} (Fu F, Mendeley Data V1, 2025;
+doi:10.17632/3rv7mf5pv9.1). The RAND HRS Longitudinal File is publicly available at
+\url{https://hrsdata.isr.umich.edu/data-products/rand} upon free registration. The English
+Longitudinal Study of Ageing (ELSA) is available from the UK Data Service (SN 5050) at
+\url{https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5050} under an End User
+Licence. The complete analysis pipeline code is available at the project repository. Reliability
+diagrams and DCA curves for all cohorts are provided in the supplementary materials.
+
+% ============================================================
+\begin{thebibliography}{99}
+% ============================================================
+
+\bibitem{Fu2025} Fu F, Dong L, Lian J, et al. Biological age threshold is associated with
+symptomatic knee osteoarthritis risk in Chinese adults: insights from machine learning analysis
+of a national cohort. \textit{PLOS One}. 2025;20(12):e0335250.
+
+\bibitem{Collins2015} Collins GS, Reitsma JB, Altman DG, Moons KGM. Transparent reporting of a
+multivariable prediction model for individual prognosis or diagnosis (TRIPOD): the TRIPOD statement.
+\textit{BMJ}. 2015;350:g7594.
+
+\bibitem{Wolff2019} Wolff RF, Moons KGM, Riley RD, et al. PROBAST: a tool to assess the risk of
+bias and applicability of prediction model studies. \textit{Ann Intern Med}. 2019;170(1):51--58.
+
+\bibitem{Zhao2014} Zhao Y, Hu Y, Smith JP, Strauss J, Yang G. Cohort profile: the China Health and
+Retirement Longitudinal Study (CHARLS). \textit{Int J Epidemiol}. 2014;43(1):61--68.
+
+\bibitem{Safiri2020} Safiri S, Kolahi AA, Smith E, et al. Global, regional and national burden of
+osteoarthritis 1990--2017: a systematic analysis of the Global Burden of Disease Study 2017.
+\textit{Ann Rheum Dis}. 2020;79(6):819--828.
+
+\bibitem{Vickers2006} Vickers AJ, Elkin EB. Decision curve analysis: a novel method for evaluating
+prediction models. \textit{Med Decis Making}. 2006;26(6):565--574.
+
+\bibitem{Vickers2016} Vickers AJ, van Calster B, Steyerberg EW. Net benefit approaches to the
+evaluation of prediction models, molecular markers, and diagnostic tests. \textit{BMJ}. 2016;352:i6.
+
+\bibitem{VanCalster2019} Van Calster B, McLernon DJ, van Smeden M, Wynants L, Steyerberg EW.
+Calibration: the Achilles heel of predictive analytics. \textit{BMC Med}. 2019;17(1):230.
+
+\bibitem{NiculescuMizil2005} Niculescu-Mizil A, Caruana R. Predicting good probabilities with
+supervised learning. In: \textit{Proceedings of the 22nd International Conference on Machine
+Learning (ICML)}. 2005:625--632.
+
+\bibitem{Steyerberg2019} Steyerberg EW. \textit{Clinical Prediction Models: A Practical Approach
+to Development, Validation, and Updating}. 2nd ed. Springer; 2019.
+
+\bibitem{Lundberg2017} Lundberg SM, Lee SI. A unified approach to interpreting model predictions.
+In: \textit{Advances in Neural Information Processing Systems}. 2017.
+
+\bibitem{Brier1950} Brier GW. Verification of forecasts expressed in terms of probability.
+\textit{Monthly Weather Review}. 1950;78(1):1--3.
+
+\bibitem{Breiman2001} Breiman L. Random forests. \textit{Machine Learning}. 2001;45:5--32.
+
+\bibitem{Chen2016} Chen T, Guestrin C. XGBoost: a scalable tree boosting system. In:
+\textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery
+and Data Mining}. 2016:785--794.
+
+\bibitem{Klemera2006} Klemera P, Doubal S. A new approach to the concept and computation of
+biological age. \textit{Mechanisms of Ageing and Development}. 2006;127(3):240--248.
+
+\bibitem{Zadrozny2002} Zadrozny B, Elkan C. Transforming classifier scores into accurate multiclass
+probability estimates. In: \textit{Proceedings of the 8th ACM SIGKDD International Conference on
+Knowledge Discovery and Data Mining}. 2002.
+
+\bibitem{HRS2023} Health and Retirement Study. \textit{Public Use Dataset}. Produced and distributed
+by the University of Michigan with funding from the National Institute on Aging (grant number
+NIA U01AG009740). Ann Arbor, MI; 2023.
+
+\bibitem{RAND2023} RAND HRS Longitudinal File 2022 (V1). Santa Monica, CA: RAND Corporation; 2023.
+\url{https://hrsdata.isr.umich.edu/data-products/rand}.
+
+\bibitem{ELSA2025} Banks J, Batty GD, Breedvelt J, et al. English Longitudinal Study of Ageing:
+Waves 0--11, 1998--2024. [data collection]. 50th Edition. UK Data Service. SN 5050, 2025.
+doi:10.5255/UKDA-SN-5050-37.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,57 @@
+================================================================================
+STEP CHARLS-RAW16 REPORT
+================================================================================
+Date: 2026-05-29 14:09:14
+Feature set: raw16 (15 features — raw17 minus Biological Age/wave/Time)
+Model: Random Forest (n=300, seed=42)
+Primary CHARLS cohort: Dataset A (n=12,329, KOA=13.3%)
+
+PURPOSE
+----------------------------------------
+Establish the CHARLS-internal raw16 baseline for direct comparison with
+ELSA and HRS raw16 external validation results. This isolates the feature-
+subset penalty within CHARLS (no cross-cultural attenuation).
+
+RAW16 FEATURE SET
+----------------------------------------
+   1. wave_id
+   2. Gender
+   3. Age_New
+   4. Marital
+   5. Education
+   6. Residence
+   7. Hypertension
+   8. Dyslipidemia
+   9. Diabetes
+  10. Cancer
+  11. CVD
+  12. Smoke
+  13. Drink
+  14. BMI
+  15. BMI_New
+
+METRICS
+----------------------------------------
+  [internal_oof] raw     : ROC-AUC=0.8039, PR-AUC=0.4821, Brier=0.0862, ECE=0.0621, Slope=0.366 [OUTSIDE], Intercept=-0.792
+  [internal_oof] isotonic: ROC-AUC=0.8000, PR-AUC=0.4792, Brier=0.0892, ECE=0.0495, Slope=1.472 [OUTSIDE], Intercept=0.742
+  [unseen_holdout] raw     : ROC-AUC=0.8687, PR-AUC=0.5852, Brier=0.0655, ECE=0.0643, Slope=0.526 [OUTSIDE], Intercept=-0.460
+  [unseen_holdout] isotonic: ROC-AUC=0.8680, PR-AUC=0.6005, Brier=0.0745, ECE=0.0746, Slope=1.667 [OUTSIDE], Intercept=0.964
+
+COMPARISON raw17 vs raw16 (CHARLS only)
+--------------------------------------------------
+  [internal_oof] raw17 AUC=0.8466 → raw16 AUC=0.8039 (Δ=0.0426); PR-AUC: 0.6878 → 0.4821 (Δ=0.2057)
+  [unseen_holdout] raw17 AUC=0.9069 → raw16 AUC=0.8687 (Δ=0.0382); PR-AUC: 0.7913 → 0.5852 (Δ=0.2061)
+
+OUTPUT FILES
+----------------------------------------
+  /home/mehmet-bulut/Desktop/Study/4bahar/bioinformatics/BioAge-KOA-Prediction/step_charls_raw16/
+    charls_raw16_metrics.csv
+    charls_raw16_calibration_summary.csv
+    charls_raw16_dca_summary.csv
+    calibration_table_charls_raw16_raw_*.csv
+    calibration_table_charls_raw16_isotonic_*.csv
+    dca_charls_raw16_raw_*.csv
+    dca_charls_raw16_isotonic_*.csv
+    calibration_curve_charls_raw16_*.png
+    dca_curve_charls_raw16_*.png
+    charls_raw16_report.txt  (this file)
