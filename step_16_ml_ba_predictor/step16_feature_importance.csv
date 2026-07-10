@@ -1,0 +1,85 @@
+target,model,feature,importance
+Biological Age,RandomForest,Gender,0.0320479209438815
+Biological Age,RandomForest,Age_New,0.6463841282072618
+Biological Age,RandomForest,Marital,0.0085955824262749
+Biological Age,RandomForest,Education,0.0280306381548584
+Biological Age,RandomForest,Residence,0.0131737908824514
+Biological Age,RandomForest,Hypertension,0.0442106878365734
+Biological Age,RandomForest,Dyslipidemia,0.0043434828988713
+Biological Age,RandomForest,Diabetes,0.009796837227491
+Biological Age,RandomForest,Cancer,0.0003654645319569
+Biological Age,RandomForest,CVD,0.0052064167795821
+Biological Age,RandomForest,Smoke,0.0088249660001199
+Biological Age,RandomForest,Drink,0.0111574257331049
+Biological Age,RandomForest,BMI,0.1869040588719688
+Biological Age,RandomForest,BMI_New,0.0009585995046028
+Biological Age,XGBoost,Gender,0.0341699756681919
+Biological Age,XGBoost,Age_New,0.7653237581253052
+Biological Age,XGBoost,Marital,0.0167198982089757
+Biological Age,XGBoost,Education,0.0224038492888212
+Biological Age,XGBoost,Residence,0.0104059446603059
+Biological Age,XGBoost,Hypertension,0.0539177320897579
+Biological Age,XGBoost,Dyslipidemia,0.0091001633554697
+Biological Age,XGBoost,Diabetes,0.0191424787044525
+Biological Age,XGBoost,Cancer,0.0105093996971845
+Biological Age,XGBoost,CVD,0.0101959649473428
+Biological Age,XGBoost,Smoke,0.0159861501306295
+Biological Age,XGBoost,Drink,0.0100794024765491
+Biological Age,XGBoost,BMI,0.0147415101528167
+Biological Age,XGBoost,BMI_New,0.0073038153350353
+Biological Age,LightGBM,Gender,0.0535778930855556
+Biological Age,LightGBM,Age_New,0.0383733558585736
+Biological Age,LightGBM,Marital,0.0357185953903704
+Biological Age,LightGBM,Education,0.0681790756606733
+Biological Age,LightGBM,Residence,0.0689031012429105
+Biological Age,LightGBM,Hypertension,0.0424761674912513
+Biological Age,LightGBM,Dyslipidemia,0.0345118860866417
+Biological Age,LightGBM,Diabetes,0.0296850488717267
+Biological Age,LightGBM,Cancer,0.0119464221069144
+Biological Age,LightGBM,CVD,0.0325811512006757
+Biological Age,LightGBM,Smoke,0.0552672861107759
+Biological Age,LightGBM,Drink,0.0600941233256908
+Biological Age,LightGBM,BMI,0.443224327259563
+Biological Age,LightGBM,BMI_New,0.0254615663086762
+BA_KDM_log,RandomForest,Gender,0.0829936512096221
+BA_KDM_log,RandomForest,Age_New,0.438619338338106
+BA_KDM_log,RandomForest,Marital,0.0113540913686789
+BA_KDM_log,RandomForest,Education,0.0254010018339422
+BA_KDM_log,RandomForest,Residence,0.0183844842087713
+BA_KDM_log,RandomForest,Hypertension,0.0984557009495602
+BA_KDM_log,RandomForest,Dyslipidemia,0.0070557421868728
+BA_KDM_log,RandomForest,Diabetes,0.0153076056694341
+BA_KDM_log,RandomForest,Cancer,0.0003399271607527
+BA_KDM_log,RandomForest,CVD,0.0060212847630777
+BA_KDM_log,RandomForest,Smoke,0.0112343274840373
+BA_KDM_log,RandomForest,Drink,0.0149105643238282
+BA_KDM_log,RandomForest,BMI,0.2686250833281978
+BA_KDM_log,RandomForest,BMI_New,0.001297197174118
+BA_KDM_log,XGBoost,Gender,0.0851578563451767
+BA_KDM_log,XGBoost,Age_New,0.5547919869422913
+BA_KDM_log,XGBoost,Marital,0.0209798756986856
+BA_KDM_log,XGBoost,Education,0.0262049157172441
+BA_KDM_log,XGBoost,Residence,0.0167540684342384
+BA_KDM_log,XGBoost,Hypertension,0.1241345778107643
+BA_KDM_log,XGBoost,Dyslipidemia,0.0167282950133085
+BA_KDM_log,XGBoost,Diabetes,0.0371137969195842
+BA_KDM_log,XGBoost,Cancer,0.0159700084477663
+BA_KDM_log,XGBoost,CVD,0.0156803149729967
+BA_KDM_log,XGBoost,Smoke,0.0263042375445365
+BA_KDM_log,XGBoost,Drink,0.0186373107135295
+BA_KDM_log,XGBoost,BMI,0.0263703372329473
+BA_KDM_log,XGBoost,BMI_New,0.0151724033057689
+BA_KDM_log,LightGBM,Gender,0.0549368968077208
+BA_KDM_log,LightGBM,Age_New,0.040336550358822
+BA_KDM_log,LightGBM,Marital,0.0346448898787428
+BA_KDM_log,LightGBM,Education,0.0710220242514229
+BA_KDM_log,LightGBM,Residence,0.0511012125711457
+BA_KDM_log,LightGBM,Hypertension,0.0482553823311061
+BA_KDM_log,LightGBM,Dyslipidemia,0.0394704281118535
+BA_KDM_log,LightGBM,Diabetes,0.0285820341499628
+BA_KDM_log,LightGBM,Cancer,0.0133630289532293
+BA_KDM_log,LightGBM,CVD,0.0259836674090571
+BA_KDM_log,LightGBM,Smoke,0.050482553823311
+BA_KDM_log,LightGBM,Drink,0.0650829002722098
+BA_KDM_log,LightGBM,BMI,0.4514971541697599
+BA_KDM_log,LightGBM,BMI_New,0.0252412769116555

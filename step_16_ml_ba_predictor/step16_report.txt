@@ -1,0 +1,82 @@
+================================================================================
+STEP 16: ML-BASED BIOLOGICAL AGE PREDICTORS REPORT
+================================================================================
+Date: 2026-07-10 01:13:20
+
+OBJECTIVE
+----------------------------------------
+Train ML regressors to predict two Biological Age targets from raw16
+features only, so the same predictors can be applied to ELSA/HRS.
+
+DATA
+----------------------------------------
+  Full CHARLS (Dataset A): 12,329 rows
+  Internal training partition: 9,863 rows
+  Unseen holdout partition: 2,466 rows
+  Features (14): Gender, Age_New, Marital, Education, Residence, Hypertension, Dyslipidemia, Diabetes, Cancer, CVD, Smoke, Drink, BMI, BMI_New
+
+TARGETS
+----------------------------------------
+  ML_BA -> Biological Age
+  ML_KDM_BA -> BA_KDM_log
+
+MODELS
+----------------------------------------
+  - RandomForestRegressor (n_estimators=300)
+  - XGBRegressor
+  - LGBMRegressor
+  - Ensemble = mean of the three
+
+INTERNAL 5-FOLD CV RESULTS (R2 / MAE / RMSE / Pearson r)
+----------------------------------------
+  Target: BA_KDM_log
+    Ensemble     R2=0.4821  MAE=6.082  RMSE=7.718  r=0.6944  n=8573
+    XGBoost      R2=0.4766  MAE=6.115  RMSE=7.759  r=0.6906  n=8573
+    RandomForest R2=0.4730  MAE=6.106  RMSE=7.786  r=0.6883  n=8573
+    LightGBM     R2=0.4619  MAE=6.229  RMSE=7.867  r=0.6799  n=8573
+  Target: Biological Age
+    Ensemble     R2=0.6356  MAE=4.708  RMSE=5.891  r=0.7973  n=9863
+    RandomForest R2=0.6336  MAE=4.698  RMSE=5.907  r=0.7961  n=9863
+    XGBoost      R2=0.6298  MAE=4.734  RMSE=5.937  r=0.7936  n=9863
+    LightGBM     R2=0.6136  MAE=4.879  RMSE=6.066  r=0.7833  n=9863
+
+UNSEEN HOLDOUT RESULTS (R2 / MAE / RMSE / Pearson r)
+----------------------------------------
+  Target: BA_KDM_log
+    Ensemble     R2=0.5009  MAE=6.041  RMSE=7.780  r=0.7079  n=2136
+    XGBoost      R2=0.4945  MAE=6.077  RMSE=7.829  r=0.7033  n=2136
+    RandomForest R2=0.4943  MAE=6.084  RMSE=7.831  r=0.7033  n=2136
+    LightGBM     R2=0.4801  MAE=6.204  RMSE=7.940  r=0.6930  n=2136
+  Target: Biological Age
+    RandomForest R2=0.6329  MAE=4.761  RMSE=5.996  r=0.7958  n=2466
+    Ensemble     R2=0.6301  MAE=4.806  RMSE=6.019  r=0.7938  n=2466
+    XGBoost      R2=0.6240  MAE=4.844  RMSE=6.069  r=0.7899  n=2466
+    LightGBM     R2=0.6031  MAE=5.014  RMSE=6.235  r=0.7767  n=2466
+
+INTERPRETATION
+----------------------------------------
+The ML-BA predictors use only sociodemographic/clinical features
+available in HRS and ELSA. They are not substitutes for KDM-BA, but
+enable fair 'predicted BA' scenarios in external cohorts.
+
+NEXT STEPS
+----------------------------------------
+  1. Apply saved models to ELSA and HRS raw16 cohorts.
+  2. Re-run KOA prediction with raw16 + ML_BA and raw16 + ML_KDM_BA.
+  3. Compare four scenarios: no BA, ML_BA, ML_KDM_BA, both ML-BAs.
+
+OUTPUT FILES
+----------------------------------------
+  /home/citirtavuk/projects/BioAge-KOA-Prediction/step_16_ml_ba_predictor/
+    step16_metrics.csv
+    step16_metrics_<target>.csv
+    step16_predictions_<target>.csv
+    step16_predictions_cv_<target>.csv
+    step16_feature_importance.csv
+    charls_internal_with_ml_ba.csv
+    charls_unseen_with_ml_ba.csv
+    charls_all_with_ml_ba.csv
+    ml_ba_ensemble_model.pkl
+    ml_kdm_ba_ensemble_model.pkl
+    ml_ba_combo_ensemble_model.pkl
+    step16_holdout_predictions_<target>.png

@@ -1,0 +1,47 @@
+================================================================================
+STEP 17: ML-BA EXTERNAL VALIDATION REPORT
+================================================================================
+Date: 2026-07-10 01:26:12
+
+PURPOSE
+----------------------------------------
+Apply ML-predicted Biological Age variants to ELSA/HRS and compare
+KOA prediction scenarios: no BA, ML_BA, ML_KDM_BA, and both.
+
+ML-BA PREDICTOR QUALITY (from step_16)
+----------------------------------------
+  ML_BA target     : Biological Age (Sheet1 BA)
+  ML_KDM_BA target : BA_KDM_log (KDM formula)
+  Expected R2      : ~0.64 for ML_BA, ~0.48 for ML_KDM_BA
+
+PREDICTED BA DISTRIBUTIONS IN EXTERNAL COHORTS
+----------------------------------------
+  ELSA ML_BA     : mean=69.10, std=5.33
+  ELSA ML_KDM_BA : mean=68.43, std=5.95
+  HRS ML_BA      : mean=65.27, std=8.62
+  HRS ML_KDM_BA  : mean=65.80, std=8.28
+
+KOA PREDICTION RESULTS
+----------------------------------------
+  [ELSA] raw16                    AUC=0.6037  PR-AUC=0.2972  Brier=0.2006  F1=0.427  n=8416
+  [ELSA] raw16+ML_BA              AUC=0.6020  PR-AUC=0.3069  Brier=0.1913  F1=0.422  n=8416
+  [ELSA] raw16+ML_BA+ML_KDM_BA    AUC=0.6126  PR-AUC=0.3187  Brier=0.1866  F1=0.425  n=8416
+  [ELSA] raw16+ML_KDM_BA          AUC=0.5972  PR-AUC=0.3003  Brier=0.1921  F1=0.421  n=8416
+  [HRS] raw16                    AUC=0.6041  PR-AUC=0.3986  Brier=0.2583  F1=0.525  n=20605
+  [HRS] raw16+ML_BA              AUC=0.6069  PR-AUC=0.4096  Brier=0.2502  F1=0.526  n=20605
+  [HRS] raw16+ML_BA+ML_KDM_BA    AUC=0.6073  PR-AUC=0.4122  Brier=0.2474  F1=0.523  n=20605
+  [HRS] raw16+ML_KDM_BA          AUC=0.6102  PR-AUC=0.4123  Brier=0.2482  F1=0.525  n=20605
+
+INTERPRETATION
+----------------------------------------
+If ML_BA or ML_KDM_BA improve AUROC over raw16 alone, the BA variable
+carries transportable KOA-relevant signal beyond Age_New. If not, the
+cross-cohort AUC gap is driven mainly by outcome/culture differences.
+
+OUTPUT FILES
+----------------------------------------
+  /home/citirtavuk/projects/BioAge-KOA-Prediction/step_17_ml_ba_external/
+    elsa_with_ml_ba.csv
+    hrs_with_ml_ba.csv
+    step17_metrics.csv
+    step17_report.txt

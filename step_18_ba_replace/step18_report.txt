@@ -1,0 +1,52 @@
+================================================================================
+STEP 18: BIOLOGICAL AGE REPLACEMENT EXPERIMENT - REPORT
+================================================================================
+Date: 2026-07-10 12:18:34
+
+PURPOSE
+----------------------------------------
+Replace Sheet1's opaque 'Biological Age' with transparent KDM-BA
+and PhenoAge_Adapted inside raw17. Same feature count, same CV.
+Tests whether Sheet1 BA is irreplaceable or any biomarker-derived
+BA achieves equivalent performance.
+
+METHODOLOGY
+----------------------------------------
+  Models: RF (200 trees), XGBoost (200), LightGBM (200)
+  CV: 3 seeds (42,123,999) x 5-fold StratifiedKFold = 15 runs each
+  Standardization: StandardScaler (fit on train only)
+  Metrics: AUROC, PR-AUC, Brier, F1
+
+RESULTS (RF)
+----------------------------------------
+Config                                AUC   PR-AUC    Brier       F1
+raw17 (Sheet1 BA)                  0.8960   0.7758   0.0572   0.7574
+raw16_only (no BA)                 0.8593   0.5780   0.0706   0.6995
+raw16+PhenoAge_Adapted             0.8407   0.5611   0.0831   0.4203
+raw16+KDM_orig                     0.8310   0.5254   0.0861   0.3859
+raw16+KDM_log                      0.8286   0.5134   0.0872   0.3723
+raw16+PhenoAge_Accel               0.7977   0.4438   0.0936   0.3030
+
+DELTA vs raw17 baseline (RF)
+----------------------------------------
+  raw17 (Sheet1 BA)                delta=+0.0000
+  raw16_only (no BA)               delta=-0.0366
+  raw16+PhenoAge_Adapted           delta=-0.0552
+  raw16+KDM_orig                   delta=-0.0650
+  raw16+KDM_log                    delta=-0.0673
+  raw16+PhenoAge_Accel             delta=-0.0983
+
+INTERPRETATION
+----------------------------------------
+  Best replacement: raw16_only (no BA) (AUC=0.8593)
+  Baseline (Sheet1 BA): AUC=0.8960
+  Gap: 0.0366
+
+  CONCLUSION: Moderate gap. Sheet1 BA captures some additional signal,
+  but transparent KDM-BA is a reasonable substitute.
+
+FILES SAVED
+----------------------------------------
+  step18_results.csv (all models)
+  step18_rf_summary.csv (RF only, sorted)
+  step18_report.txt (this report)

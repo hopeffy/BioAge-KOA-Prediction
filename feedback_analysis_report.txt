@@ -1,0 +1,180 @@
+================================================================================
+FEEDBACK IMPLEMENTATION STATUS REPORT
+manuscript_v4_corrected.tex vs code/step folders
+================================================================================
+
+FEEDBACKS (Turkish -> English)
+----------------------------------------
+1. "CHARLS'deki BA tahmin eden ML"            -> Train an ML model to predict BA in CHARLS
+2. "Sonrakilere BA tahmin edip onu yaz"       -> Apply same BA prediction to HRS and ELSA
+3. "Bu BA feature"                              -> BA is explicitly a feature
+4. "Tek feature hepsinde ciktilari gostermek" -> Show BA as single-feature output across all cohorts
+5. "Hesaplanan BA / tahmin edilen BA / BA'siz" -> Three scenarios: computed BA, predicted BA, no BA
+6. "Her versiyonu karsilastiriyoruz"           -> Compare all BA versions
+7. "Ensemble BA prediction"                    -> Ensemble BA prediction as additional option
+8. "Introduction son cumlesi sonraki paragrafla baglantili olsun" -> Last word of Intro bridges to next paragraph
+
+
+================================================================================
+CATEGORY 1: ALREADY IN THE MANUSCRIPT (v3/v4)
+================================================================================
+
+  #3 - "BA is a feature"
+       v3 raw17 feature table lists BA as 1 of 17 variables.
+       v4 abstracts reference BA as central predictor.
+       SHAP importance (BA=0.439 in XGBoost) cited in Discussion.
+
+  #5 - PARTIAL: 2 of 3 scenarios present
+       (a) Computed BA: raw17 CHARLS results in v3/v4 (AUROC 0.847/0.907).
+       (c) No BA: raw16 HRS/ELSA results in v3/v4 (AUROC 0.604 each).
+       MISSING: (b) ML-predicted BA scenario.
+
+
+================================================================================
+CATEGORY 2: IN CODE/RESULTS — NOT IN THE MANUSCRIPT
+================================================================================
+
+  #4 - PARTIAL: BA single-feature output (CHARLS only)
+       File: step_04_ba_impact/aging_clock_summary.csv
+       Univariate BA -> KOA AUROC = 0.536 (weak standalone).
+       But XGBoost SHAP ranks BA #1 at 0.439 (Table: shap_importance_xgb.csv).
+       RF SHAP ranks BA #4 at 0.027 (Table: shap_importance_rf.csv).
+       SHAP waterfall plots for BA interactions exist in step_04_ba_impact/.
+       NOT in manuscript: no standalone BA performance table.
+       NOT in manuscript: no cross-cohort BA predictive comparison.
+
+  #6 - 15-config BA version comparison exists in code
+       File: step_04_ba_impact/feature_impact_comparison.csv
+       Full table:
+         raw17                     -> 0.894  (baseline)
+         raw17 + PhenoAge_Adapted  -> 0.868
+         raw17 + KDM_orig          -> 0.865
+         raw17 + KDM_log           -> 0.863
+         raw17 + PhenoAge_Accel    -> 0.855
+         raw17 + Pheno_quartile    -> 0.853
+         raw17 + KDM_quartile      -> 0.842
+         raw17 + KDM+PhenoAge      -> 0.835
+         raw17 + aging_accel       -> 0.806
+         raw17 + BIR               -> 0.795
+         raw17 + biomarkers        -> 0.727
+         raw17 + Pheno+biomarkers  -> 0.721
+         raw17 + KDM+biomarkers    -> 0.718
+         raw17 + all               -> 0.687
+       Manuscript only shows raw17 vs raw16 vs raw16+RAS.
+
+       Also: step_04_ba_impact/aging_clock_summary.csv
+       Head-to-head aging clock comparison:
+         Biological Age         -> AUROC=0.536 (univariate)
+         BIR_log                -> AUROC=0.535
+         BIR_orig               -> AUROC=0.530
+         PhenoAge_Adapted       -> AUROC=0.530
+         BA_KDM_orig            -> AUROC=0.519
+         BA_KDM_log             -> AUROC=0.516
+         PhenoAge_Adapted_Accel -> AUROC=0.504
+       This table is NOT in the manuscript.
+
+  HRS external validation — full results exist
+       File: step_ext_val_hrs/ext_val_hrs_metrics.csv
+         HRS Wave 13, n=20,605, prevalence=33.9%
+         raw16: AUROC 0.604, PR-AUC 0.399, Brier 0.258, ECE 0.194
+         Calibration slope 0.184, DCA negative (-33.8 per 100)
+         DCA curves: step_ext_val_hrs/dca_curve_hrs.png
+         Reliability diagrams: step_ext_val_hrs/reliability_diagram_hrs.png
+       These are in v3 manuscript but DCA/reliability figures not cited.
+
+  ELSA Wave 8 external validation — full results exist
+       File: step_ext_val_elsa/ext_val_elsa_metrics.csv
+         ELSA W8, n=8,416, prevalence=24.9%
+         raw16 raw:   AUROC 0.604, PR-AUC 0.297, slope 0.271
+         raw16 iso:   AUROC 0.606, PR-AUC 0.305, slope 0.938, ECE 0.005
+         DCA curves and reliability diagrams exist.
+
+  ELSA Wave 9 sensitivity analysis — full results exist
+       File: step_ext_val_elsa_wave9/ext_val_elsa_metrics.csv
+         ELSA W9, n=8,683, prevalence=23.3%, BMI fully imputed
+         raw16 raw:   AUROC 0.596, slope 0.187
+         raw16 iso:   AUROC 0.615, slope 1.225
+         Temporal robustness confirmed.
+       In manuscript but BMI imputation and slope anomaly not discussed.
+
+  ELSA RAS experiment — full results exist
+       File: step_elsa_ras/elsa_ras_comparison.csv
+         ELSA raw16:        AUROC 0.605
+         ELSA raw16 + RAS:  AUROC 0.611
+         Delta: +0.006 (negligible)
+         RAS R-squared on CHARLS KDM-BA: 0.417
+       In manuscript v4 but ELSA nurse visit preprocessing details not included.
+
+  Step 11 clinical validation — internal OOF + holdout calibration split
+       File: step_11_clinical_validation/calibration_summary.csv
+       12 configurations (3 feature sets x 2 variants x 2 eval sets).
+       v3 only shows OOF decile table; unseen holdout calibration
+       and DCA avoided-interventions per 100 are computed but not tabulated.
+
+  Unified aging report — cross-cohort BA feasibility mapped
+       File: step_unified_aging/unified_aging_summary.csv
+       CHARLS: KDM-BA possible (8 biomarkers)
+       ELSA:   KDM-BA IMPOSSIBLE (missing creatinine, BUN, platelets)
+       ELSA:   RAS potential (4 biomarkers via nurse visit)
+       HRS:    KDM-BA IMPOSSIBLE (requires VBS linkage)
+       This feasibility analysis is NOT in the manuscript.
+
+
+================================================================================
+CATEGORY 3: NOT IMPLEMENTED — DOESN'T EXIST ANYWHERE
+================================================================================
+
+  #1 - ML model predicting BA in CHARLS
+       NO script trains an ML model (RF/XGBoost) to predict Biological Age.
+       Only two BA computations exist:
+       (i)  KDM-BA from 8 biomarkers (step_03_kdm_ba.py) — deterministic formula
+       (ii) RAS from 4 biomarkers (step_elsa_ras.py) — linear regression, R^2=0.42
+       No .pkl model, no prediction pipeline, no feature-importance for BA prediction.
+       step_unified_aging/unified_aging_summary.csv explicitly states:
+         ELSA KDM_BA row: "NOT AVAILABLE (missing creatinine, BUN, platelets)"
+         HRS KDM_BA row:  "NOT AVAILABLE (requires VBS linkage)"
+
+  #2 - Apply BA prediction to HRS and ELSA
+       Depends on #1. Without ML-BA model, no BA prediction exists for any
+       external cohort. HRS external validation report (line 39-41) confirms:
+         "Biological Age excluded (not in RAND fat file). For full raw17
+          analysis: link HRS Venous Blood Study (VBS) biomarker file."
+       ELSA report confirms KDM-BA impossible from public files.
+       RAS was computed only for ELSA, not HRS, and is linear not ML.
+
+  #7 - Ensemble BA prediction
+       Zero ensemble BA code. Individual BA variants exist separately
+       (KDM-BA, PhenoAge_Adapted, BIR, RAS) but no code to:
+         - Average/stack multiple BA estimates
+         - Train a meta-learner combining BA variants
+         - Output a single ensemble BA score per participant
+       feature_impact_comparison.csv tests KOA+BA variants together but
+       never combines BA estimates into one ensemble BA feature.
+
+  #8 - Introduction last sentence bridges to Methods
+       v4 Introduction is literal placeholder: "[KEEP existing introduction from v3]".
+       v3 introduction ends with: "...motivate the full harmonisation plan."
+       Next section (Methods) begins: "The prediction target was symptomatic KOA..."
+       No thematic bridge. This is a pure writing task.
+       v4 hasn't even written the Introduction text yet — it's still a [KEEP] stub.
+
+
+================================================================================
+SUMMARY COUNT
+================================================================================
+
+  In manuscript:                      2 of 8 (one partial)
+  In code/results, not in manuscript: 5 of 8 (significant partial coverage)
+  Not implemented:                    3 of 8 (code gaps) + 1 of 8 (writing gap)
+
+BLOCKING DEPENDENCIES:
+  #1 (ML-BA model) blocks #2 (apply to HRS/ELSA)
+  #1 + #2 together block full #5 (three scenarios)
+  #1 blocks #7 (nothing to ensemble)
+  #1, #2, #7 are purely code gaps — need new Python scripts
+
+NON-BLOCKING:
+  #4, #6 are already in code outputs — just need to be added to manuscript
+  #8 is writing only — ready to do anytime
+
+================================================================================
