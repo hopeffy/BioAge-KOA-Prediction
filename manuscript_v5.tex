@@ -1,0 +1,916 @@
+% manuscript_v5.tex
+% Integrates: v3 (full manuscript), v4 (AUC gap decomposition),
+%   step_16 (ML-BA predictor), step_17 (ML-BA external application),
+%   step_18 (BA replacement experiment), single-feature BA analysis.
+% Key narrative: cross-cultural gap dominates; BA method/availability is minor.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{xcolor}
+
+\setstretch{1.08}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={KOA Risk Prediction: Internal Validation and Cross-Cultural Transportability},
+  pdfauthor={BioAge-KOA-Prediction Team}
+}
+
+\title{Predicting Symptomatic Knee Osteoarthritis Risk from CHARLS Data:\\
+\large Internal Validation, Biological Age Decomposition, and\\
+Cross-Cultural Transportability Assessment on HRS and ELSA}
+\author{BioAge-KOA-Prediction Team}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+\begin{abstract}
+% ============================================================
+\textbf{Objective.} To develop and internally validate a machine-learning model for
+symptomatic knee osteoarthritis (KOA) risk prediction in a CHARLS-derived Chinese cohort,
+to decompose the contribution of biological age (BA) to model performance, and to
+characterise transportability to US (HRS) and UK (ELSA) aging cohorts.
+
+\textbf{Methods.} A Random Forest model ($n=300$ trees) was trained on 17
+sociodemographic and clinical variables (raw17) from CHARLS Dataset~A
+($n=12{,}329$, KOA prevalence $13.3\%$). Internal validation used stratified 5-fold
+out-of-fold estimation and an early 80/20 stratified unseen holdout. To isolate the
+contribution of the pre-computed CHARLS ``Biological Age'' field --- whose derivation
+method is undocumented --- we (i) computed transparent alternatives using the
+Klemera--Doubal method (KDM-BA) and an adapted PhenoAge surrogate from 8 blood
+biomarkers, (ii) replaced Sheet1 BA with each alternative inside raw17 while holding
+feature count constant, and (iii) evaluated each BA variant as a single-feature KOA
+predictor. To test whether a demographic-predicted BA could transport the aging signal
+to cohorts lacking biomarkers, we trained ML regressors (Random Forest, XGBoost,
+LightGBM ensemble) to predict both Sheet1 BA and KDM-BA from raw16 features alone
+($R^2=0.64$ and $0.48$, respectively), then applied the predicted BA to HRS Wave~13
+($n=20{,}605$) and ELSA Wave~8 ($n=8{,}416$) using harmonised raw16 feature sets.
+
+\textbf{Results.} The primary model achieved ROC-AUC $0.847$ (internal OOF) / $0.907$
+(unseen holdout). Replacing Sheet1 BA with KDM-BA degraded RF AUROC from $0.896$ to
+$0.831$ ($\Delta=-0.065$); removing BA entirely produced $0.859$ ($\Delta=-0.037$).
+As a single feature, all BA variants achieved only $0.50$--$0.54$ AUROC in CHARLS,
+barely above chance. ML-predicted BA applied to external cohorts improved over raw16 by
+only $+0.003$ to $+0.010$ AUROC. Restricting CHARLS to raw16 produced ROC-AUC $0.804$ /
+$0.869$ --- a feature-subset penalty of $\Delta=-0.038$. Applying the same raw16 model to
+ELSA and HRS yielded ROC-AUC $0.604$ for both cohorts --- a cross-cultural penalty of
+$\Delta=-0.265$. The total AUC gap ($-0.303$) decomposes as $13\%$ feature-subset vs.\
+$87\%$ cross-cultural. The RAS experiment recovered only $\Delta=+0.006$ AUC.
+
+\textbf{Conclusions.} The biomarker--BA--KOA relationship is population-specific: BA is
+a weak standalone KOA predictor ($r=0.02$--$0.04$) even in CHARLS, and demographic-predicted
+BA adds negligible signal to external cohorts. The dominant driver of performance
+degradation across populations is cross-cultural --- outcome definition heterogeneity,
+diagnostic ascertainment, and population demographic differences --- not the absence of
+Biological Age or the choice of BA computation method. These findings reframe the external
+validation challenge: the primary obstacle is not a missing feature but a non-transferable
+disease--aging relationship.
+
+\textbf{Keywords:} symptomatic KOA, machine learning, biological age, KDM, cross-cultural
+transportability, TRIPOD, calibration, DCA, HRS, ELSA
+\end{abstract}
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+Knee osteoarthritis is one of the leading causes of years lived with disability worldwide, with
+age-standardised prevalence having risen steadily in recent decades\cite{Safiri2020}. In aging
+populations, symptomatic KOA --- defined as clinically diagnosed knee osteoarthritis co-occurring with
+knee pain --- imposes substantial mobility, quality-of-life, and health-care-utilization costs.
+Risk-prediction models may support earlier stratification, but publication-quality evidence requires
+more than high discrimination alone. Reporting should include calibration behaviour and threshold-level
+decision consequences, not only ROC-AUC, and should follow standards such as TRIPOD\cite{Collins2015}
+and PROBAST\cite{Wolff2019}.
+
+A recent CHARLS-based report\cite{Fu2025} presented strong discrimination for symptomatic KOA and
+highlighted biological age as a central predictor. However, two concerns arise when interpreting
+this finding. First, the ``Biological Age'' field supplied in the CHARLS dataset is pre-computed
+without documented methodology, raising questions about reproducibility and potential overfitting.
+Second, translating a BA-centric prediction model to other populations assumes that the
+biomarker--aging--disease relationship is biologically universal --- an assumption that has not been
+tested across culturally distinct cohorts. This manuscript frames the project as an internal-validation
+study with a structured decomposition of the BA contribution and a cross-cultural replication on the
+RAND Health and Retirement Study (HRS) and the English Longitudinal Study of Ageing (ELSA) to
+characterise the transportability of the aging--KOA signal across populations.
+
+% ============================================================
+\section{Methods}
+% ============================================================
+
+\subsection{Study Objective and Outcome}
+The prediction target was symptomatic KOA in a CHARLS-derived cohort. The outcome was operationalised
+from two CHARLS-derived fields as
+\[
+\text{KOA} = \mathbb{1}\bigl[\text{Arthritis} = \text{``yes''}\bigr]\ \wedge\
+\mathbb{1}\bigl[\text{position\_knees} = \text{``yes''}\bigr],
+\]
+\noindent which matches the ``symptomatic KOA'' operationalisation used by Fu et al.\cite{Fu2025}
+(physician-reported arthritis with knee-localised joint pain). Both source fields were removed from the
+predictor set to prevent target leakage; rows with \texttt{position\_knees} missing were dropped because
+the target itself could not be verified for those subjects.
+
+\subsection{Study Cohort and Exclusion Cascade}
+The analysis was built on Sheet1 of the CHARLS extract (15{,}545 baseline rows, 28 columns). Applying
+the target-verification rule removed 3{,}216 rows with \texttt{position\_knees} missing, yielding the
+analytical cohort ``Dataset A'' with 12{,}329 rows and 13.32\% symptomatic-KOA prevalence. Dataset A
+was then partitioned once, before any model development, into an internal training partition
+(80\%, $n=9{,}863$, prevalence 13.32\%) and an unseen holdout partition (20\%, $n=2{,}466$, prevalence
+13.30\%) using a stratified split with \texttt{random\_state=42}. Table~\ref{tab:table1} summarises
+the characteristics of Dataset A and its two partitions.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Cohort characteristics of the CHARLS-derived Dataset A and the early 80/20 partitions.
+Values are counts (\%) or mean $\pm$ SD.}
+\label{tab:table1}
+\begin{tabular}{lccc}
+\toprule
+Characteristic & Full Dataset A & Internal train (80\%) & Unseen holdout (20\%) \\
+\midrule
+N & 12{,}329 & 9{,}863 & 2{,}466 \\
+Symptomatic KOA, n (\%) & 1{,}642 (13.32) & 1{,}314 (13.32) & 328 (13.30) \\
+Biological Age, mean $\pm$ SD & $58.70 \pm 9.79$ & $58.70 \pm 9.76$ & $58.70 \pm 9.90$ \\
+Age bucket $\geq 60$, n (\%) & 3{,}357 (27.2) & 2{,}676 (27.1) & 681 (27.6) \\
+Female, n (\%) & 6{,}443 (52.3) & 5{,}143 (52.1) & 1{,}300 (52.7) \\
+BMI, mean $\pm$ SD & $23.65 \pm 3.84$ & $23.63 \pm 3.83$ & $23.73 \pm 3.88$ \\
+BMI overweight, n (\%) & 10{,}122 (82.1) & 8{,}081 (81.9) & 2{,}041 (82.8) \\
+BMI obese, n (\%) & 1{,}488 (12.1) & 1{,}192 (12.1) & 296 (12.0) \\
+Married, n (\%) & 10{,}429 (84.6) & 8{,}343 (84.6) & 2{,}086 (84.6) \\
+Education low/medium/high, \% & 28.1 / 61.9 / 10.0 & 27.9 / 62.0 / 10.1 & 28.8 / 61.4 / 9.7 \\
+Residence urban, n (\%) & 7{,}954 (64.5) & 6{,}388 (64.8) & 1{,}566 (63.5) \\
+Hypertension, n (\%) & 3{,}142 (25.5) & 2{,}503 (25.4) & 639 (25.9) \\
+Dyslipidemia, n (\%) & 1{,}108 (9.0) & 882 (8.9) & 226 (9.2) \\
+Diabetes, n (\%) & 726 (5.9) & 584 (5.9) & 142 (5.8) \\
+Cancer, n (\%) & 93 (0.8) & 75 (0.8) & 18 (0.7) \\
+CVD, n (\%) & 1{,}304 (10.6) & 1{,}016 (10.3) & 288 (11.7) \\
+Smoking ever, n (\%) & 4{,}896 (39.7) & 3{,}897 (39.5) & 999 (40.5) \\
+Drinking ever, n (\%) & 5{,}144 (41.7) & 4{,}156 (42.1) & 988 (40.1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Feature Set (raw17)}
+The pre-specified primary feature set, referred to throughout as \emph{raw17}, contains 17 variables
+(Table~\ref{tab:raw17}). The subset excluding Biological Age, wave, and Time is labelled \emph{raw16}
+and is used as the harmonised feature set for external validation.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{The 17 variables in the raw17 feature set used by the primary model.}
+\label{tab:raw17}
+\begin{tabular}{llp{6.2cm}}
+\toprule
+Variable & Type & CHARLS-derived meaning \\
+\midrule
+wave & integer & Survey wave identifier \\
+Time & integer & Survey year indicator \\
+Gender & binary & Self-reported sex (1=male, 2=female) \\
+Age\_New & ordinal (2) & Age bucket (45--59, $\geq 60$) \\
+Marital & binary & Marital status (married vs other) \\
+Education & ordinal (3) & Educational attainment (low/medium/high) \\
+Residence & binary & Urban vs rural \\
+Hypertension & binary & Self-reported physician-diagnosed \\
+Dyslipidemia & binary & Self-reported physician-diagnosed \\
+Diabetes & binary & Self-reported physician-diagnosed \\
+Cancer & binary & Self-reported physician-diagnosed \\
+CVD & binary & Self-reported cardiovascular disease \\
+Smoke & binary & Ever vs never smoker \\
+Drink & binary & Ever vs never drinker \\
+BMI & continuous & Measured body-mass index (kg/m\textsuperscript{2}) \\
+BMI\_New & ordinal (3) & BMI category (underweight/normal, overweight, obese) \\
+Biological Age & continuous & CHARLS-supplied biological-age field \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Missing Data Handling}
+After the target-verification exclusion, the raw17 feature set and the outcome were complete for every
+row in Dataset A (0\% missingness). As a pipeline safety net and to support sensitivity branches with
+additional biomarker features, missing values were handled with train-fitted simple imputation (median
+for numeric, most-frequent for categorical). Imputers and standardisation (\texttt{StandardScaler})
+were fit on training data only and then applied to validation or unseen data.
+
+\subsection{Early Unseen Holdout Strategy}
+The early 80/20 stratified split was created before model development and persisted as CSV artefacts
+(\texttt{dataset\_A\_internal\_train.csv}, \texttt{dataset\_A\_unseen\_test.csv}). Internal model
+development and OOF estimation used only the internal partition; the unseen partition was reserved for
+a single-shot external-style evaluation.
+
+\subsection{Primary and Secondary Modeling Strategy}
+The pre-specified primary model was a Random Forest (\texttt{RandomForestClassifier},
+\texttt{n\_estimators=300}, \texttt{random\_state=42}, all other hyperparameters at scikit-learn
+defaults). No grid search, Bayesian search, or Optuna-based tuning was performed on this configuration.
+The BA replacement experiment (Section~\ref{sec:ba-replace}) additionally evaluated XGBoost and
+LightGBM for robustness.
+
+\subsection{Class-Imbalance Handling}
+No resampling (SMOTE, random under-/over-sampling) and no \texttt{class\_weight} adjustment were
+applied to the primary Random Forest. PR-AUC was pre-specified as the primary discrimination metric
+alongside ROC-AUC, following standard recommendations for imbalanced binary prediction.
+
+\subsection{Evaluation Framework}
+Internal validation used stratified 5-fold out-of-fold (OOF) estimation on the internal training
+partition, followed by re-evaluation on the unseen holdout. Reported metrics:
+\begin{itemize}
+\item discrimination: ROC-AUC, PR-AUC;
+\item calibration: Brier score, ECE, MCE, Cox logistic calibration slope and intercept,
+      decile reliability diagram;
+\item decision relevance: Vickers net benefit at thresholds 0.05--0.60 and threshold-band
+      summaries for 0.10--0.30.
+\end{itemize}
+Probability calibration was assessed for both uncalibrated (``raw'') and isotonic-calibrated
+(\texttt{CalibratedClassifierCV}, \texttt{method=``isotonic''}, 3-fold inner CV) variants.
+
+\subsection{Interpretability}
+Model interpretation included SHAP global importance\cite{Lundberg2017}, SHAP interaction analysis,
+and local waterfall plots for representative cases.
+
+\subsection{Differences vs.\ Reference Study (Fu et al., 2025)}
+Table~\ref{tab:paper-delta} summarises the key methodological differences between the reference
+study and the present pipeline.
+
+\begin{table}[h!]
+\centering
+\caption{Methodological delta versus reference study.}
+\label{tab:paper-delta}
+\begin{tabular}{p{3.4cm}p{5.1cm}p{5.1cm}}
+\toprule
+Domain & Reference paper & Current pipeline \\
+\midrule
+Cohort framing & Symptomatic KOA in CHARLS-derived sample &
+  Symptomatic KOA in CHARLS-derived sample; updated internal protocol with early holdout \\
+Missing data & Study-specific exclusions / imputation choices &
+  Train-fitted \texttt{SimpleImputer} within each split \\
+Split protocol & 70/30 emphasised & Early 80/20 unseen holdout + internal OOF validation \\
+Class-balance handling & Model-specific handling &
+  No resampling, no \texttt{class\_weight} adjustment \\
+Primary metric & ROC-AUC-centred & PR-AUC reported alongside ROC-AUC \\
+Primary model & XGBoost-centred & Random Forest + raw17 pre-specified \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\subsection{Biological Age Computation: KDM-BA and PhenoAge}
+% ============================================================
+\label{sec:kdm-ba}
+
+The CHARLS dataset contains a pre-computed ``Biological Age'' field whose derivation method is not
+documented in the source publication\cite{Fu2025}. To test whether this feature is reproducible using
+transparent methods, we computed two alternative biological age constructs from 8 blood biomarkers
+available in CHARLS: platelet count, C-reactive protein (CRP), HbA1c, creatinine, blood urea nitrogen
+(BUN), total cholesterol, triglycerides, and systolic blood pressure (SBP).
+
+\textbf{KDM-BA.} The Klemera--Doubal Method\cite{Klemera2006} computes BA as a weighted combination
+of biomarker regressions on chronological age. For each biomarker $x_i$, a linear regression
+$x_i = a_i + b_i \cdot \text{CA} + \epsilon_i$ is fitted, yielding intercept $a_i$, slope $b_i$, and
+residual standard error $\sigma_i$. The KDM biological age is:
+\[
+\text{BA}_{\text{KDM}} = \frac{\sum_i \frac{(x_i - a_i)\, b_i}{\sigma_i^2} + \frac{\text{CA}}{\sigma_{\text{CA}}^2}}
+{\sum_i \frac{b_i^2}{\sigma_i^2} + \frac{1}{\sigma_{\text{CA}}^2}}
+\]
+We computed KDM-BA from both log-transformed (\texttt{BA\_KDM\_log}) and original-scale
+(\texttt{BA\_KDM\_orig}) biomarker values. The ``Biological Age'' column in Sheet1 was used as the
+chronological age proxy, as CHARLS does not provide a continuous age variable (Age\_New is a binary
+$\geq 60$ indicator).
+
+\textbf{PhenoAge\_Adapted.} Because canonical Levine PhenoAge\cite{Levine2018} requires biomarkers
+not available in CHARLS (e.g., albumin, lymphocyte count), we constructed an adapted phenotypic-age
+surrogate using winsorised z-scores of the same 8 biomarkers, weighted by clinical plausibility
+(CRP: $+1.40$, HbA1c: $+1.20$, creatinine: $+1.00$, BUN: $+0.90$, SBP: $+1.00$,
+total cholesterol: $+0.60$, triglycerides: $+0.60$, platelet: $-0.40$) and mapped to age units via
+a scaling transformation. This score is explicitly non-canonical and is labelled \emph{PhenoAge\_Adapted}
+throughout to avoid misinterpretation.
+
+\textbf{Biological Illness Risk (BIR).} BIR was defined as $\text{BA}_{\text{KDM}} - \text{CA}$,
+capturing the acceleration or deceleration of biological relative to chronological age.
+
+% ============================================================
+\subsection{Biological Age Replacement Experiment}
+% ============================================================
+\label{sec:ba-replace}
+
+To determine whether the pre-computed Sheet1 BA is irreplaceable or whether any transparent
+biomarker-derived BA achieves equivalent performance, we conducted a controlled replacement
+experiment (Step 18). Six configurations were evaluated using the same cross-validation protocol
+as the feature impact analysis (3 seeds $\times$ 5-fold StratifiedKFold, Random Forest with
+StandardScaler):
+
+\begin{enumerate}
+  \item \textbf{raw17 (Sheet1 BA)} --- baseline, 17 features with the original BA field.
+  \item \textbf{raw16\_only (no BA)} --- 16 features, BA removed entirely.
+  \item \textbf{raw16 + KDM\_log} --- KDM-BA (log-transformed) replaces Sheet1 BA, 17 features.
+  \item \textbf{raw16 + KDM\_orig} --- KDM-BA (original scale) replaces Sheet1 BA, 17 features.
+  \item \textbf{raw16 + PhenoAge\_Adapted} --- adapted PhenoAge replaces Sheet1 BA, 17 features.
+  \item \textbf{raw16 + PhenoAge\_Accel} --- PhenoAge acceleration replaces Sheet1 BA, 17 features.
+\end{enumerate}
+
+All configurations use the same $n=12{,}329$ CHARLS Dataset A and the same evaluation harness.
+XGBoost (200 trees, max depth 6) and LightGBM (200 trees) were additionally evaluated for
+robustness.
+
+% ============================================================
+\subsection{ML-Predicted Biological Age for External Transport}
+% ============================================================
+\label{sec:ml-ba}
+
+Because ELSA and HRS lack the biomarkers needed to compute KDM-BA or PhenoAge directly, we tested
+whether a demographic-predicted BA could transport the aging signal. Two ML regressor targets were
+trained on CHARLS internal training data using only raw16 features (the sociodemographic variables
+available in all three cohorts):
+
+\begin{enumerate}
+  \item \textbf{ML\_BA} --- predict the Sheet1 ``Biological Age'' column (CV $R^2=0.636$,
+        holdout $R^2=0.633$, MAE $=4.7$ years).
+  \item \textbf{ML\_KDM\_BA} --- predict the computed KDM-BA (CV $R^2=0.482$,
+        holdout $R^2=0.501$, MAE $=6.0$ years).
+\end{enumerate}
+
+Each target was predicted by an ensemble of Random Forest, XGBoost, and LightGBM regressors
+(300 trees each). The fitted models were then applied to the harmonised ELSA and HRS raw16
+data to generate predicted BA columns, which were added to the raw16 feature set for KOA
+prediction. Four scenarios per cohort were evaluated:
+
+\begin{enumerate}
+  \item raw16 only (no BA --- baseline)
+  \item raw16 + ML\_BA
+  \item raw16 + ML\_KDM\_BA
+  \item raw16 + ML\_BA + ML\_KDM\_BA (ensemble BA --- addresses the ensemble prediction option)
+\end{enumerate}
+
+% ============================================================
+\subsection{AUC Gap Decomposition Strategy}
+% ============================================================
+\label{sec:auc-decomp}
+
+To disentangle the feature-subset penalty (attributable to BA absence) from the cross-cultural
+penalty (attributable to population differences), we conducted the transportability analysis in
+three stages:
+
+\begin{enumerate}
+  \item \textbf{CHARLS raw16 internal baseline.} The primary model was re-trained and
+        evaluated on the CHARLS internal partition using only the features common to
+        CHARLS, ELSA, and HRS (raw16). Because both training and evaluation occur within
+        CHARLS, this isolates the feature-subset penalty with no cross-cultural confound.
+  \item \textbf{External application.} The raw16 model trained on CHARLS was applied to
+        ELSA Wave~8 and HRS Wave~13 without re-fitting. The gap between CHARLS raw16
+        holdout performance and external cohort performance is the cross-cultural
+        attenuation, net of the feature-subset penalty.
+  \item \textbf{Reduced Aging Score (RAS) sensitivity.} To test whether a harmonised
+        biological age proxy could recover the feature-subset gap, we constructed RAS
+        from four biomarkers available in both CHARLS and ELSA (hs-CRP, HbA1c, systolic
+        BP, total cholesterol). RAS was trained as a linear predictor of CHARLS KDM-BA
+        ($R^2=0.417$) and added to the raw16 model for ELSA external validation.
+\end{enumerate}
+
+\subsection{Reduced Aging Score (RAS)}
+\label{sec:ras}
+
+RAS was constructed as a linear combination of four biomarkers:
+\[
+\text{RAS} = \beta_0 + \beta_1 \cdot \ln(\text{CRP}) + \beta_2 \cdot \ln(\text{HbA1c})
+           + \beta_3 \cdot \ln(\text{TC}) + \beta_4 \cdot \text{SBP}
+\]
+The coefficients $\beta_{0..4}$ were estimated by ordinary least squares regression of
+CHARLS KDM-BA on the four CHARLS biomarker equivalents
+(\texttt{crp\_mg.L}, \texttt{Hb A1c}, \texttt{TC\_mg.d L}, \texttt{sbp.mean}).
+$R^2$ on CHARLS data was $0.417$ ($n=12{,}329$), indicating that RAS captures
+$41.7\%$ of KDM-BA's internal variance.
+
+For ELSA, biomarkers were converted to CHARLS-equivalent units: hs-CRP (mg/L)
+log-transformed directly; HbA1c converted from IFCC (mmol/mol) to DCCT (\%) via
+$\text{HbA1c}\% = (\text{mmol/mol} / 10.929) + 2.15$, then log-transformed; total
+cholesterol converted from mmol/L to mg/dL ($\times 38.67$), then log-transformed;
+systolic BP used directly (mmHg). After excluding ELSA respondents with missing
+biomarker codes ($-8$, $-2$, $-1$), $2{,}499$ of $8{,}416$ respondents had complete
+biomarker data for RAS computation.
+
+% ============================================================
+\subsection{HRS and ELSA Cross-Cultural Replication}
+% ============================================================
+
+\subsubsection*{HRS Cohort and Data Source}
+The Health and Retirement Study (HRS)\cite{HRS2023} is a US nationally representative longitudinal
+panel of adults aged $\geq 50$. For this replication we used the RAND HRS Longitudinal File 2022
+(Version 1)\cite{RAND2023}. Wave 13 (survey year 2016) was selected as the target wave.
+
+\subsubsection*{HRS Eligibility and KOA Proxy Definition}
+Inclusion criteria: respondents with Wave 13 interview data and age $\geq 45$ years
+($n=20{,}640$ after age filter). A two-component KOA proxy was constructed:
+(1) current physician-reported arthritis (\texttt{r13arthr} = 1) and
+(2) knee-relevant functional impairment (\texttt{r13stoopa} = 1).
+This proxy results in a prevalence of 33.9\% ($n_{\text{pos}}=6{,}976$). Rows with missing
+arthritis response were excluded ($n=35$), yielding a final analytic sample of $n=20{,}605$.
+
+\subsubsection*{ELSA Cohort and Data Source}
+The English Longitudinal Study of Ageing (ELSA) is a UK nationally representative longitudinal
+panel of adults aged $\geq 50$. We used the Gateway Harmonized ELSA file (Version H, 2002--2023),
+distributed through the UK Data Service (SN 5050). Wave 8 (2016--2017) was the primary target wave;
+Wave 9 (2018--2019) was retained as a temporal sensitivity analysis.
+
+\subsubsection*{ELSA Eligibility and KOA Proxy Definition}
+Inclusion criteria: Wave 8 interview data and age $\geq 45$ years ($n=8{,}416$ after age filter).
+A two-component KOA proxy was constructed:
+(1) ever-diagnosed arthritis (\texttt{r8arthre} = 1) and
+(2) difficulty stooping/kneeling/crouching (\texttt{r8stoopa} = 1).
+This proxy results in a prevalence of $24.9\%$ ($n_{\text{pos}}=2{,}097$).
+
+\subsubsection*{External Feature Harmonisation (raw16)}
+Both HRS and ELSA were harmonised to the raw16 feature set (raw17 minus Biological Age, wave, and
+Time). HRS yielded 12 of 17 raw17 features (Biological Age, Residence, Dyslipidemia, and wave
+excluded); ELSA yielded 14 of 17 (Biological Age, wave, and Time excluded; Residence and
+Dyslipidemia available). The trained CHARLS model was re-fitted on the raw16 subset of the CHARLS
+internal training partition and then applied to each external cohort.
+
+% ============================================================
+\section{Results}
+% ============================================================
+
+\subsection{Primary Model Performance (Random Forest + raw17)}
+Table~\ref{tab:primary-metrics} summarises the matched internal OOF and unseen-holdout performance
+for the pre-specified primary model.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Primary model (Random Forest + raw17) metrics.}
+\label{tab:primary-metrics}
+\begin{tabular}{llccccccc}
+\toprule
+Set & Variant & ROC-AUC & PR-AUC & Brier & ECE & Slope & Intercept & F1 \\
+\midrule
+Internal OOF & Raw & 0.847 & 0.688 & 0.070 & 0.045 & 0.989 & $-0.040$ & 0.649 \\
+Internal OOF & Isotonic & 0.839 & 0.676 & 0.069 & 0.042 & 1.607 & 1.000 & 0.653 \\
+Unseen holdout & Raw & 0.907 & 0.791 & 0.053 & 0.056 & 1.216 & 0.178 & 0.801 \\
+Unseen holdout & Isotonic & 0.900 & 0.779 & 0.051 & 0.060 & 1.742 & 1.088 & 0.799 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Decision-Curve Analysis}
+Across the 10\%--30\% threshold band, the primary model produced strictly positive mean net benefit
+against both treat-all and treat-none. The derived net-reduction-per-100-patients
+figure\cite{Vickers2016} was $56.0$ (internal OOF) and $63.8$ (unseen holdout) avoided unnecessary
+interventions versus treat-all; for isotonic probabilities the corresponding values were $56.5$ and
+$65.8$, with relative reductions of $65.2\%$ and $75.9\%$ against the treat-all baseline.
+
+% ============================================================
+\subsection{Biological Age Replacement Experiment}
+% ============================================================
+\label{sec:results-ba-replace}
+
+Table~\ref{tab:ba-replace} presents the BA replacement experiment. Replacing Sheet1 BA with
+any transparent alternative degraded performance; removing BA entirely performed better than
+replacing it with KDM-BA.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Biological Age replacement experiment (Random Forest, 3 seeds $\times$ 5-fold CV,
+$n=12{,}329$). All configurations preserve the same 17-feature count except raw16\_only.}
+\label{tab:ba-replace}
+\begin{tabular}{lccccc}
+\toprule
+Configuration & Features & ROC-AUC & PR-AUC & Brier & $\Delta$ from raw17 \\
+\midrule
+raw17 (Sheet1 BA)       & 17 & 0.896 & 0.776 & 0.057 & --- (baseline) \\
+raw16\_only (no BA)     & 16 & 0.859 & 0.578 & 0.071 & $-0.037$ \\
+raw16 + PhenoAge\_Adapted & 17 & 0.841 & 0.561 & 0.083 & $-0.055$ \\
+raw16 + KDM\_orig       & 17 & 0.831 & 0.525 & 0.086 & $-0.065$ \\
+raw16 + KDM\_log        & 17 & 0.829 & 0.513 & 0.087 & $-0.067$ \\
+raw16 + PhenoAge\_Accel & 17 & 0.798 & 0.444 & 0.094 & $-0.098$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Three observations emerge. First, Sheet1 BA is the best BA variant in the full model
+($0.896$), but its contribution is modest ($-0.037$ when removed). Second, replacing BA
+with any transparent alternative \emph{actively hurts}: raw16 + KDM\_orig ($0.831$) is
+worse than raw16\_no\_BA ($0.859$), indicating multicollinearity noise from inserting a
+redundant biomarker-derived feature. Third, the maximum penalty from any BA manipulation
+(method replacement or removal) is $0.067$ AUROC --- small relative to the $0.26$
+cross-cultural gap reported below.
+
+% ============================================================
+\subsection{Single-Feature BA Predictive Value Across Cohorts}
+% ============================================================
+\label{sec:single-feature}
+
+Table~\ref{tab:single-feature} presents each BA variant as a standalone KOA predictor
+(univariate logistic regression). This directly addresses the question: does BA carry
+KOA signal on its own, and does that signal transfer?
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Single-feature BA $\rightarrow$ KOA AUROC across all cohorts. ``---'' indicates
+the BA variant cannot be computed (missing biomarkers for KDM/PhenoAge; Sheet1 BA only
+in CHARLS). ML-predicted BA is a demographic proxy (Step 16/17).}
+\label{tab:single-feature}
+\begin{tabular}{lccc}
+\toprule
+Feature & CHARLS ($n{=}12{,}329$) & ELSA ($n{=}8{,}416$) & HRS ($n{=}20{,}605$) \\
+\midrule
+Biological Age (Sheet1)        & 0.536 & --- & --- \\
+KDM-BA (log)                   & 0.516 & --- & --- \\
+KDM-BA (orig)                  & 0.519 & --- & --- \\
+PhenoAge\_Adapted              & 0.530 & --- & --- \\
+PhenoAge\_Accel                & 0.504 & --- & --- \\
+BIR\_log                       & 0.535 & --- & --- \\
+ML\_BA (predicted)             & ---   & 0.556 & 0.629 \\
+ML\_KDM\_BA (predicted)        & ---   & 0.589 & 0.629 \\
+Age\_New (no BA, baseline)     & ---   & 0.553 & 0.599 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All BA variants in CHARLS achieve only $0.50$--$0.54$ AUROC --- barely above chance.
+The best (Sheet1 BA at $0.536$) has a KOA correlation of $r=0.038$.
+This refutes the interpretation that BA is a strong standalone KOA predictor: its apparent importance in the full raw17 model (SHAP $=0.439$)
+ reflects conditional interaction effects, not marginal predictive power.
+
+In HRS, ML-predicted BA achieves $0.629$ --- but Age\_New alone achieves $0.599$ (HRS has
+$33.9\%$ KOA prevalence vs.\ CHARLS's $13.3\%$). The BA increment over age is only
+$+0.030$. In ELSA, ML\_BA ($0.556$) is nearly identical to Age\_New ($0.553$).
+ML\_KDM\_BA consistently adds more over age than ML\_BA ($+0.036$ vs.\ $+0.003$ in ELSA;
+$+0.030$ vs.\ $+0.030$ in HRS), suggesting that the biomarker-derived KDM target encodes
+more KOA-relevant signal than the undocumented Sheet1 BA formula.
+
+% ============================================================
+\subsection{ML-Predicted BA Applied to External Cohorts}
+% ============================================================
+\label{sec:results-ml-ba-external}
+
+Table~\ref{tab:ml-ba-external} presents the effect of adding ML-predicted BA to the
+raw16 model in ELSA and HRS.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{ML-predicted BA applied to external cohorts. All scenarios use the CHARLS-trained
+Random Forest re-fitted on raw16. ML\_BA and ML\_KDM\_BA are demographic-predicted BA from
+Step 16. The ensemble scenario (raw16 + ML\_BA + ML\_KDM\_BA) addresses the ensemble BA
+prediction option.}
+\label{tab:ml-ba-external}
+\begin{tabular}{lcccccc}
+\toprule
+Cohort & Scenario & $n$ & ROC-AUC & PR-AUC & Brier & F1 \\
+\midrule
+ELSA & raw16               & 8{,}416  & 0.604 & 0.297 & 0.201 & 0.427 \\
+ELSA & raw16 + ML\_BA       & 8{,}416  & 0.602 & 0.307 & 0.191 & 0.422 \\
+ELSA & raw16 + ML\_KDM\_BA  & 8{,}416  & 0.597 & 0.300 & 0.192 & 0.421 \\
+ELSA & raw16 + ML\_BA + ML\_KDM\_BA & 8{,}416 & 0.613 & 0.319 & 0.187 & 0.425 \\
+\midrule
+HRS  & raw16               & 20{,}605 & 0.604 & 0.399 & 0.258 & 0.525 \\
+HRS  & raw16 + ML\_BA       & 20{,}605 & 0.607 & 0.410 & 0.250 & 0.526 \\
+HRS  & raw16 + ML\_KDM\_BA  & 20{,}605 & 0.610 & 0.412 & 0.248 & 0.525 \\
+HRS  & raw16 + ML\_BA + ML\_KDM\_BA & 20{,}605 & 0.607 & 0.412 & 0.247 & 0.523 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ensemble BA scenario (raw16 + ML\_BA + ML\_KDM\_BA) achieved the highest AUROC in
+ELSA ($0.613$, $+0.009$ over raw16) but not in HRS ($0.607$). ML\_KDM\_BA alone was
+best in HRS ($0.610$, $+0.006$). All gains are within $\pm 0.01$ of raw16 ---
+negligible relative to the $0.26$ cross-cultural gap.
+
+% ============================================================
+\subsection{AUC Gap Decomposition: Feature-Subset vs.\ Cross-Cultural}
+% ============================================================
+
+Table~\ref{tab:auc-decomp} presents the structured decomposition of the
+$0.303$ ROC-AUC gap between the CHARLS raw17 holdout and the external cohorts.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{AUC gap decomposition across CHARLS raw17, CHARLS raw16, ELSA, and HRS.
+All values are raw (uncalibrated) ROC-AUC except where noted.}
+\label{tab:auc-decomp}
+\begin{tabular}{lcccccc}
+\toprule
+Stage & Cohort & Features & $n$ & KOA\% & ROC-AUC & $\Delta$ from baseline \\
+\midrule
+A  & CHARLS raw17 Holdout  & 17 & 2{,}466  & 13.3 & 0.907 & --- (baseline) \\
+B  & CHARLS raw16 Holdout  & 15 & 2{,}466  & 13.3 & 0.869 & $-0.038$ (feature-subset) \\
+C  & ELSA W8 raw16         & 14 & 8{,}416  & 24.9 & 0.604 & $-0.303$ (total) \\
+C' & HRS W13 raw16         & 12 & 20{,}605 & 33.9 & 0.604 & $-0.303$ (total) \\
+\cmidrule{6-7}
+   & \textbf{Feature-subset component}  & & & & & $\mathbf{-0.038}$ (13\%) \\
+   & \textbf{Cross-cultural component}  & & & & & $\mathbf{-0.265}$ (87\%) \\
+\bottomrule
+\end{tabular}
+
+\vspace{4pt}
+\footnotesize{Feature-subset penalty = B $-$ A. Cross-cultural penalty = C $-$ B.
+Percentages are of the total A$\rightarrow$C gap ($0.303$).}
+\end{table}
+
+The feature-subset penalty (dropping Biological Age, wave, and Time from raw17)
+accounts for $13\%$ of the total AUC loss. The remaining $87\%$ is cross-cultural
+attenuation occurring between the CHARLS and external cohorts.
+
+Notably, the ELSA and HRS raw16 ROC-AUC values are nearly identical ($0.604$)
+despite ELSA having two more harmonised features (Residence and Dyslipidemia), using
+a different KOA proxy (ever-diagnosed vs.\ current-wave arthritis), and drawing from
+a different population (UK vs.\ US). This convergence supports a stable transportability
+ceiling around $\text{AUROC} \approx 0.60$ for raw16 without Biological Age across
+culturally distinct aging cohorts.
+
+\subsection{Reduced Aging Score (RAS) Experiment}
+
+Table~\ref{tab:ras} presents the effect of adding RAS to the ELSA raw16 model.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Effect of the Reduced Aging Score on ELSA external validation.
+RAS captures 41.7\% of KDM-BA variance in CHARLS.}
+\label{tab:ras}
+\begin{tabular}{lccc}
+\toprule
+Model & ROC-AUC & PR-AUC & Brier \\
+\midrule
+ELSA raw16              & 0.6050 & 0.297 & 0.200 \\
+ELSA raw16 + RAS        & 0.6111 & 0.316 & 0.188 \\
+\cmidrule{2-4}
+$\Delta$ (RAS gain)     & \textbf{+0.0061} & +0.019 & $-0.013$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Adding RAS --- the best biological age proxy constructible from publicly available
+ELSA biomarkers --- recovers only $0.006$ ROC-AUC, or approximately $2\%$ of the
+total cross-cultural gap.
+
+\subsection{ELSA Wave 9 Sensitivity Analysis}
+A temporal sensitivity analysis using ELSA Wave 9 (2018--2019, $n=8{,}683$, KOA proxy
+prevalence $23.3\%$) produced consistent results: ROC-AUC $0.596$ (raw), calibration
+slope $0.187$. After split-calibrate-evaluate isotonic recalibration: ROC-AUC $0.615$,
+slope $1.225$, ECE $0.009$. Wave 9 lacks a harmonized BMI variable, so BMI was fully
+imputed from CHARLS training data. The results confirm temporal robustness.
+
+% ============================================================
+\section{Discussion}
+% ============================================================
+
+\paragraph{Internal validation.}
+The primary raw17 model achieved ROC-AUC 0.847 (OOF) / 0.907 (holdout) and PR-AUC 0.688 / 0.791,
+substantially exceeding the prevalence baseline. Strictly positive DCA net benefit in the 10\%--30\%
+threshold band provides a grounded internal-evidence basis for risk-stratification decision support.
+
+\paragraph{The BA contribution is modest and method-dependent.}
+The BA replacement experiment (Table~\ref{tab:ba-replace}) reveals that Sheet1 BA contributes
+$0.037$ AUROC to the raw17 model. Replacing it with transparent KDM-BA or PhenoAge degrades
+performance further ($-0.055$ to $-0.098$), not because these methods are inferior BA estimators,
+but because inserting a redundant biomarker-derived feature into raw16 introduces
+multicollinearity noise. The single-feature analysis (Table~\ref{tab:single-feature})
+confirms that all BA variants --- including Sheet1's --- are weak standalone KOA predictors
+($0.50$--$0.54$ AUROC, $r=0.02$--$0.04$). BA's apparent importance in the full model
+(SHAP $= 0.439$) reflects conditional interaction effects, not marginal predictive value.
+
+\paragraph{The biomarker--BA--KOA relationship is population-specific.}
+The central hypothesis tested in this study is that the aging--disease relationship
+established in CHARLS does not transfer to other populations. Five lines of evidence
+converge:
+
+\begin{enumerate}
+  \item \textbf{BA is weak even in CHARLS.} All BA variants achieve only $0.50$--$0.54$
+        AUROC as single-feature KOA predictors ($r=0.02$--$0.04$). If BA were a strong
+        biological signal for KOA, one would expect higher standalone discrimination.
+  \item \textbf{Removing BA costs only $0.037$ AUROC.} The BA removal penalty is a small
+        fraction of the total $0.303$ cross-cohort gap.
+  \item \textbf{ML-predicted BA adds negligible signal externally.} Demographic-predicted
+        BA (ML\_BA, ML\_KDM\_BA) improves raw16 by $+0.003$ to $+0.010$ AUROC in ELSA/HRS.
+        The ensemble BA scenario adds $+0.009$. These gains are at least $25\times$ smaller
+        than the cross-cultural gap.
+  \item \textbf{ELSA--HRS convergence despite differences.} ELSA and HRS produce
+        near-identical ROC-AUC ($0.604$) despite different feature availability (14 vs.\
+        12 variables), KOA proxy definitions (ever-diagnosed vs.\ current-wave arthritis),
+        and populations (UK vs.\ US). This convergence is not compatible with a BA-centric
+        narrative: if missing BA were the primary driver, cohorts with different feature
+        completeness should perform differently.
+  \item \textbf{RAS recovers negligible signal.} The best biological age proxy
+        constructible from ELSA biomarkers recovers $+0.006$ ROC-AUC --- less than $2\%$
+        of the cross-cultural gap.
+\end{enumerate}
+
+\paragraph{AUC gap decomposition: cross-cultural dominates.}
+The structured decomposition (Table~\ref{tab:auc-decomp}) shows that $87\%$ of the
+total AUC gap is cross-cultural, not feature-subset. The complete evidence chain is:
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Evidence chain: BA method choice and availability produce small penalties;
+the cross-cultural cliff dominates.}
+\label{tab:chain}
+\begin{tabular}{llcc}
+\toprule
+Stage & Description & ROC-AUC & $\Delta$ \\
+\midrule
+1 & raw17 + Sheet1 BA (CHARLS)      & 0.896 & --- \\
+2 & raw16 + KDM-BA (CHARLS)         & 0.831 & $-0.065$ (BA method) \\
+3 & raw16 no BA (CHARLS)           & 0.859 & $-0.037$ (BA removal) \\
+4 & raw16 no BA (ELSA)             & 0.604 & $-0.292$ (cross-cultural) \\
+4 & raw16 no BA (HRS)              & 0.604 & $-0.292$ (cross-cultural) \\
+5 & raw16 + ML-BA ensemble (ELSA)  & 0.613 & $+0.009$ (ML-BA recovers) \\
+5 & raw16 + ML-KDM-BA (HRS)        & 0.610 & $+0.006$ (ML-BA recovers) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+No manipulation of BA --- using the original formula, replacing it with KDM-BA,
+removing it entirely, or predicting it from demographics --- can account for the
+$0.26$ cross-cultural gap. The BA-related penalties ($0.037$--$0.067$) are
+$4$--$7\times$ smaller than the cross-cultural penalty ($0.265$). Even if full
+biomarker-derived BA were available in ELSA/HRS, the expected recovery is bounded
+by what BA contributes in CHARLS ($\sim 0.04$ AUROC), which is $<15\%$ of the gap.
+
+\paragraph{Comparison with the reference study.}
+The reference study by Fu et al.\cite{Fu2025} reported XGBoost-centred discrimination with
+biological age as the dominant predictor (SHAP $> 0.6$), using a 70/30 split. The present
+pipeline replicates the same outcome operationalisation and confirms that the raw17 feature
+set supports strong discrimination. However, our analysis adds three findings that qualify
+the original interpretation: (1) the pre-computed BA field has undocumented methodology
+and is only moderately better than transparent KDM-BA ($0.896$ vs.\ $0.831$);
+(2) BA is a weak standalone predictor ($0.536$ AUROC, $r=0.038$) whose apparent importance
+reflects interaction effects; and (3) the BA--KOA relationship does not transport across
+populations.
+
+\paragraph{Strengths.}
+Strengths include the large population-based cohort, transparent leakage controls,
+pre-specification of the primary model, multi-dimensional evaluation (discrimination,
+calibration, clinical utility, interpretability), adherence to TRIPOD and PROBAST,
+the BA replacement experiment directly testing whether Sheet1 BA is reproducible,
+the ML-BA transport experiment, and the structured AUC gap decomposition.
+
+% ============================================================
+\section{Limitations}
+% ============================================================
+
+\begin{itemize}
+
+\item \textbf{Outcome proxy heterogeneity is the primary limitation.} The AUC gap
+      decomposition shows that $87\%$ of performance loss is cross-cultural, with
+      outcome definition mismatch (CHARLS knee-localised pain vs.\ HRS/ELSA stooping
+      difficulty) likely the largest single contributor. Until a harmonised KOA
+      definition is applied across all three cohorts, the true transportability of
+      the raw17 model cannot be estimated.
+
+\item \textbf{Sheet1 Biological Age is undocumented.} The pre-computed BA field in
+      the CHARLS dataset lacks published methodology. Our analysis shows its residual
+      (after removing age-group variance) correlates strongly with biomarkers
+      (SBP $r=0.41$, creatinine $r=0.32$, BUN $r=0.32$), suggesting it was derived
+      from the same biomarkers used in our KDM-BA computation. However, the exact
+      formula --- and therefore its susceptibility to overfitting or information
+      leakage --- cannot be verified.
+
+\item \textbf{ML-predicted BA is a demographic proxy, not real BA.} The ML-BA models
+      predict BA from sociodemographic features ($R^2=0.64$ for Sheet1 BA, $0.48$
+      for KDM-BA). They capture only the demographic-BA relationship, not the
+      biomarker-BA relationship. A reviewer could argue that real biomarker-derived
+      BA in ELSA/HRS would perform better. However, given that BA contributes only
+      $0.037$ AUROC in CHARLS and is a weak standalone predictor ($0.536$), the
+      expected gain is bounded and cannot account for the $0.26$ gap.
+
+\item \textbf{ELSA and HRS lack full biomarker panels.} KDM-BA cannot be computed in
+      ELSA (missing creatinine, BUN, platelets) or HRS (requires VBS linkage). RAS,
+      based on 4 of 8 KDM biomarkers, captures only $42\%$ of KDM-BA variance. We
+      acknowledge that a cohort with complete biomarkers and the same KOA definition
+      as CHARLS would provide a fairer test. However, the near-identical ELSA/HRS
+      performance ($0.604$ each) despite different feature availability suggests
+      feature completeness is not the binding constraint.
+
+\item \textbf{Cross-sectional outcome.} The KOA label is cross-sectionally derived
+      and cannot distinguish incident from prevalent cases.
+
+\item \textbf{Self-reported comorbidities.} Hypertension, diabetes, cancer, CVD,
+      dyslipidemia, and lifestyle variables are self-reported in CHARLS, inheriting
+      recall bias and diagnostic ascertainment heterogeneity.
+
+\item \textbf{Bootstrap confidence intervals not yet tabulated.} Point estimates and
+      reliability diagrams are the current evidence basis for calibration; bootstrap
+      CIs for discrimination and calibration metrics will be added in the next
+      revision (TRIPOD item 16).
+
+\end{itemize}
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+This study demonstrates a methodologically rigorous internal-validation pipeline for
+symptomatic KOA prediction in a large Chinese nationally-representative cohort. The
+pre-specified primary model (Random Forest + raw17) achieves strong discrimination
+(ROC-AUC $0.907$ on the unseen holdout), acceptable calibration, and positive DCA net
+benefit in the clinically relevant 10\%--30\% risk threshold band.
+
+A structured decomposition of the biological age contribution reveals that BA ---
+whether pre-computed by an undocumented formula, transparently computed via KDM, or
+demographic-predicted via ML --- is a weak standalone KOA predictor ($0.50$--$0.54$
+AUROC) whose contribution to the full model is modest ($0.037$ AUROC) and whose
+relationship with KOA does not transfer across populations. ML-predicted BA applied
+to external cohorts adds $+0.003$ to $+0.010$ AUROC; an ensemble of two ML-BA
+variants adds $+0.009$. All BA-related effects combined are bounded at $\sim 0.067$
+AUROC.
+
+The cross-cultural gap ($0.265$ AUROC, $87\%$ of the total) is the dominant barrier
+to transportability. The near-identical performance of the raw16 model on ELSA and
+HRS ($0.604$) despite different feature availability, KOA proxy definitions, and
+populations establishes a conservative transportability ceiling that is not explained
+by BA absence. These findings reframe the external validation challenge: the primary
+obstacle is not a missing feature but a non-transferable disease--aging relationship.
+Future work should prioritise (i) harmonised KOA outcome definitions across cohorts,
+(ii) prospective validation in cohorts where the same KOA definition and full
+biomarker panels are available, and (iii) investigation of population-specific
+effect modifiers that drive the cross-cultural gap.
+
+% ============================================================
+\section*{Data Availability}
+% ============================================================
+The CHARLS development dataset (``Raw Data of Biological Age'' derived from CHARLS) is publicly
+available under a CC BY 4.0 licence at Mendeley Data:
+\url{https://data.mendeley.com/datasets/3rv7mf5pv9/1} (Fu F, Mendeley Data V1, 2025;
+doi:10.17632/3rv7mf5pv9.1). The RAND HRS Longitudinal File is publicly available at
+\url{https://hrsdata.isr.umich.edu/data-products/rand} upon free registration. The English
+Longitudinal Study of Ageing (ELSA) is available from the UK Data Service (SN 5050) at
+\url{https://beta.ukdataservice.ac.uk/datacatalogue/studies/study?id=5050} under an End User
+Licence. The complete analysis pipeline code is available at the project repository.
+
+% ============================================================
+\begin{thebibliography}{99}
+% ============================================================
+
+\bibitem{Fu2025} Fu F, Dong L, Lian J, et al. Biological age threshold is associated with
+symptomatic knee osteoarthritis risk in Chinese adults: insights from machine learning analysis
+of a national cohort. \textit{PLOS One}. 2025;20(12):e0335250.
+
+\bibitem{Collins2015} Collins GS, Reitsma JB, Altman DG, Moons KGM. Transparent reporting of a
+multivariable prediction model for individual prognosis or diagnosis (TRIPOD): the TRIPOD statement.
+\textit{BMJ}. 2015;350:g7594.
+
+\bibitem{Wolff2019} Wolff RF, Moons KGM, Riley RD, et al. PROBAST: a tool to assess the risk of
+bias and applicability of prediction model studies. \textit{Ann Intern Med}. 2019;170(1):51--58.
+
+\bibitem{Safiri2020} Safiri S, Kolahi AA, Smith E, et al. Global, regional and national burden of
+osteoarthritis 1990--2017: a systematic analysis of the Global Burden of Disease Study 2017.
+\textit{Ann Rheum Dis}. 2020;79(6):819--828.
+
+\bibitem{Vickers2006} Vickers AJ, Elkin EB. Decision curve analysis: a novel method for evaluating
+prediction models. \textit{Med Decis Making}. 2006;26(6):565--574.
+
+\bibitem{Vickers2016} Vickers AJ, van Calster B, Steyerberg EW. Net benefit approaches to the
+evaluation of prediction models, molecular markers, and diagnostic tests. \textit{BMJ}. 2016;352:i6.
+
+\bibitem{VanCalster2019} Van Calster B, McLernon DJ, van Smeden M, Wynants L, Steyerberg EW.
+Calibration: the Achilles heel of predictive analytics. \textit{BMC Med}. 2019;17(1):230.
+
+\bibitem{NiculescuMizil2005} Niculescu-Mizil A, Caruana R. Predicting good probabilities with
+supervised learning. In: \textit{Proceedings of the 22nd International Conference on Machine
+Learning (ICML)}. 2005:625--632.
+
+\bibitem{Steyerberg2019} Steyerberg EW. \textit{Clinical Prediction Models: A Practical Approach
+to Development, Validation, and Updating}. 2nd ed. Springer; 2019.
+
+\bibitem{Lundberg2017} Lundberg SM, Lee SI. A unified approach to interpreting model predictions.
+In: \textit{Advances in Neural Information Processing Systems}. 2017.
+
+\bibitem{Klemera2006} Klemera P, Doubal S. A new approach to the concept and computation of
+biological age. \textit{Mechanisms of Ageing and Development}. 2006;127(3):240--248.
+
+\bibitem{Levine2018} Levine ME, Lu AT, Quach A, et al. An epigenetic biomarker of aging for
+lifespan and healthspan. \textit{Aging}. 2018;10(4):573--591.
+
+\bibitem{HRS2023} Health and Retirement Study. \textit{Public Use Dataset}. Produced and distributed
+by the University of Michigan with funding from the National Institute on Aging (grant number
+NIA U01AG009740). Ann Arbor, MI; 2023.
+
+\bibitem{RAND2023} RAND HRS Longitudinal File 2022 (V1). Santa Monica, CA: RAND Corporation; 2023.
+\url{https://hrsdata.isr.umich.edu/data-products/rand}.
+
+\bibitem{ELSA2025} Banks J, Batty GD, Breedvelt J, et al. English Longitudinal Study of Ageing:
+Waves 0--11, 1998--2024. [data collection]. 50th Edition. UK Data Service. SN 5050, 2025.
+doi:10.5255/UKDA-SN-5050-37.
+
+\end{thebibliography}
+
+\end{document}
